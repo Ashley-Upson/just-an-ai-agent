@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Login";
+    ViewData["SSOUserId"] = "Guest";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var success = ViewData["Success"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-4">
+        <form class="form" name="login" method="post" action="/Account/Login">
+            @if(!string.IsNullOrWhiteSpace(success))
+            {
+                <div class="alert alert-success text-center">
+                    <p>@success</p>
+                </div>
+            }
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="username-text">Username</span>
+                    <input type="text" class="form-control" name="User" aria-describedby="username-text" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="password-text">Password</span>
+                    <input type="password" class="form-control" name="Pass" aria-describedby="password-text forgot-password-text create-account-text" required />
+                </div>
+                <div class="form-text text-end" id="create-account-text">
+                    <a href="/Account/Register">Don't have an account?</a>
+                    <br />
+                    <a href="/Account/ForgotPassword">Forgotten your password?</a>
+                </div>
+            </div>
+
+            <div class="mb-3 btn-toolbar justify-content-end">
+                <div class="btn-group btn-group-sm">
+                    <button type="submit" class="btn btn-success">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

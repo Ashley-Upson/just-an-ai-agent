@@ -1,6 +1,0 @@
-@AIServer_HostAddress = http://localhost:5171
-
-GET {{AIServer_HostAddress}}/
-Accept: application/json
-
-###

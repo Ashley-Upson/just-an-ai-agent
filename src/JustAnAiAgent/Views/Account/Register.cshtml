@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "Register";
+    ViewData["SSOUserId"] = "Guest";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var errors = ViewData["Errors"] as IEnumerable<string>;
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-4">
+        <form class="form" name="register" method="post" action="/Account/Register">
+            @if (errors.Any())
+            {
+                <div class="alert alert-warning text-center">
+                    @foreach(string error in errors)
+                    {
+                        <p>@error</p>
+                    }
+                </div>
+            }
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="email-text">Email</span>
+                    <input type="email" class="form-control" name="Email" aria-describedby="email-text" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="display-name-text">Display Name</span>
+                    <input type="text" class="form-control" name="DisplayName" aria-describedby="display-name-text" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="password-text">Password</span>
+                    <input type="password" class="form-control" name="Password" aria-describedby="password-text" required />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text" id="confirm-password-text">Confirm Password</span>
+                    <input type="password" class="form-control" name="ConfirmPassword" aria-describedby="confirm-password-text" required />
+                </div>
+            </div>
+
+            <div class="mb-3 btn-toolbar justify-content-end">
+                <div class="btn-group btn-group-sm">
+                    <button type="submit" class="btn btn-success">
+                        Register
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+﻿{
+    "$schema": "https://json.schemastore.org/launchsettings.json",
+    "profiles": {
+        "https": {
+            "commandName": "Project",
+            "dotnetRunMessages": true,
+            "launchBrowser": false,
+            "launchUrl": "https://localhost:7181/Markets",
+            "applicationUrl": "https://localhost:7181",
+            "environmentVariables": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "AI.OllamaExe": "C:\\Users\\Ash\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+                "AI.RunOllama": "false",
+                "AI.FallbackModel": "deepseek-r1:14b",
+                "AI.ServerUrl": "http://192.168.1.127:11434/"
+            }
+        }
+    }
+}
