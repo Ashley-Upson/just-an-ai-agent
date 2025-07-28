@@ -1,36 +1,33 @@
-using cCoder.Security.Api;
-using JustAnAiAgent.AI;
-using cCoder.Security.Data.EF.MSSQL;
-using cCoder.Security.Data.EF.Interfaces;
+//using cCoder.Security.Api;
+//using cCoder.Security.Data.EF.MSSQL;
+//using cCoder.Security.Data.EF.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using JustAnAiAgent.Data;
 
 var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
     .Build();
 
-if (config.GetValue<bool>("AI.RunOllama"))
-{
-    AIModelHost aiHost = new(config.GetValue<string>("AI.OllamaExe"), config.GetValue<string>("AI.FallbackModel"));
-    aiHost.Start();
-}
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddSecurityApi((services, securityConfig) =>
-{
-    securityConfig.AddMSSQLModelProvider(services, builder.Configuration.GetConnectionString("SSO"));
-    securityConfig.UsePasswordHasherHashing(services);
-});
+//builder.Services.AddSecurityApi((services, securityConfig) =>
+//{
+//    securityConfig.AddMSSQLModelProvider(services, builder.Configuration.GetConnectionString("SSO"));
+//    securityConfig.UsePasswordHasherHashing(services);
+//});
+
+builder.Services.AddDbContext<JustAnAiAgentDbContext>(options => options.UseSqlServer(config.GetConnectionString("JustAnAiAgent")));
 
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
 
-scope.ServiceProvider
-    .GetRequiredService<ISecurityDbContextFactory>()
-    .CreateDbContext()
-    .Migrate();
+//scope.ServiceProvider
+//    .GetRequiredService<ISecurityDbContextFactory>()
+//    .CreateDbContext()
+//    .Migrate();
 
 // Configure the HTTP request pipeline.
 app.UseHttpsRedirection();

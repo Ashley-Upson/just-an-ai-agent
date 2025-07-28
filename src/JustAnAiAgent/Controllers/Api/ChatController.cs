@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace JustAnAiAgent.Controllers.Api;
 
 [Route("api/chat")]
-public class ChatController(ILogger<HomeController> logger, AIChatClient chatClient)
+public class ChatController(ILogger<ChatController> logger, AIChatClient chatClient)
     : Controller
 {
     [HttpPost]

@@ -2,7 +2,7 @@
 
 namespace JustAnAiAgent.Data.Entities;
 
-class Message
+public class Message
 {
     public Guid Id { get; set; }
 
@@ -14,11 +14,21 @@ class Message
 
     public string UserPrompt { get; set; }
 
-    public string SystemPrompt { get; set; }
+    public string? SystemPrompt { get; set; }
 
-    public string ModelThought { get; set; }
+    public string? ModelThought { get; set; }
 
-    public string ModelResponse { get; set; }
+    public string? ModelResponse { get; set; }
 
-    public SSOUser? User { get; set; }
+    public DateTimeOffset? ResponseReceivedAt { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public virtual SSOUser? User { get; set; }
+
+    public virtual Conversation Conversation { get; set; }
+
+    public virtual ICollection<AgenticProject> AgenticProjects { get; set; }
 }

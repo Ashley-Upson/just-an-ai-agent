@@ -50,7 +50,8 @@ public class AccountController(
         try
         {
             await accountManager.LoginAsync(auth.User, auth.Pass);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             return Redirect($"/Account/Login?error={ex.Message}");
         }
@@ -78,7 +79,7 @@ public class AccountController(
         if (errors.Count > 0)
             return Redirect("/Account/Register?" + string.Join('&', errors.Select(e => "errors=" + e)));
 
-        RegisterUser form = new ();
+        RegisterUser form = new();
         form.Email = request.Email;
         form.DisplayName = request.DisplayName;
         form.Password = request.Password;
@@ -86,7 +87,8 @@ public class AccountController(
         try
         {
             (SSOUser user, string token) = await accountManager.RegisterAsync(form);
-        } catch (Exception exception)
+        }
+        catch (Exception exception)
         {
             logger.LogWarning(exception.Message, exception);
 

@@ -1,11 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using cCoder.Security.Objects.Entities;
 
 namespace JustAnAiAgent.Data.Entities;
 
-class UserConversation
+public class UserConversation
 {
+    public string UserId { get; set; }
+
+    public Guid ConversationId { get; set; }
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public virtual SSOUser User { get; set; }
+
+    public virtual Conversation Conversation { get; set; }
 }

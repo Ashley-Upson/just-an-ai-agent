@@ -6,7 +6,7 @@ namespace JustAnAiAgent.Controllers;
 
 public class HomeController(
     ILogger<HomeController> logger,
-    ISSOAuthInfoOrchestrationService authInfoOrchestrationService) 
+    ISSOAuthInfoOrchestrationService authInfoOrchestrationService)
     : Controller
 {
     private readonly ISSOAuthInfoOrchestrationService authInfoOrchestrationService = authInfoOrchestrationService;
