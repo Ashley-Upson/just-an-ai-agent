@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="cCoder.Security.Api" Version="2025.6.16.554" />
+    <PackageReference Include="cCoder.Security.Data.EF.MSSQL" Version="2025.6.16.554" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -12,6 +12,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Data", "JustAnAiAgent.Data\JustAnAiAgent.Data.csproj", "{84A8829F-998E-45E0-8AB5-4E433AF1D86F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Services", "JustAnAiAgent.Services\JustAnAiAgent.Services.csproj", "{7E0099F0-EC8E-47AF-93A2-00D048CF518C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Providers", "JustAnAiAgent.Providers\JustAnAiAgent.Providers.csproj", "{71F13764-5108-4674-8D65-99427F2C84F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +30,14 @@ Global
 		{84A8829F-998E-45E0-8AB5-4E433AF1D86F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84A8829F-998E-45E0-8AB5-4E433AF1D86F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84A8829F-998E-45E0-8AB5-4E433AF1D86F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E0099F0-EC8E-47AF-93A2-00D048CF518C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E0099F0-EC8E-47AF-93A2-00D048CF518C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E0099F0-EC8E-47AF-93A2-00D048CF518C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E0099F0-EC8E-47AF-93A2-00D048CF518C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71F13764-5108-4674-8D65-99427F2C84F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71F13764-5108-4674-8D65-99427F2C84F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71F13764-5108-4674-8D65-99427F2C84F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71F13764-5108-4674-8D65-99427F2C84F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
