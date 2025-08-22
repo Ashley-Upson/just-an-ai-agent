@@ -5,93 +5,117 @@
 
 <link rel="stylesheet" href="css/chat.css">
 
-<h1>Crap GPT</h1>
-<div id="chat-container">
-    <div id="chat-display"></div>
-    <div id="input-container">
-        <input type="text" id="message-input" placeholder="Type your message..." />
-        <button id="send-button" onclick="sendMessage()">Send</button>
+<div class="row">
+    <div class="col-md-2">
+        <h3>Conversations</h3>
+
+        <button type="button" class="btn btn-sm btn-primary" name="new-conversation">
+            New Conversation
+        </button>
+
+        <ul class="list-group mt-1 w-75" id="conversations-list"></ul>
+    </div>
+    <div class="col-md-8">
+        <h1 id="title">JustAnAiAgent</h1>
+
+        <ul class="list-group" id="messages-box"></ul>
+
+        <div name="chat-toolbar">
+            <input type="text" id="message-input" class="form-control-sm" placeholder="Type your message..." />
+            <button class="btn btn-sm btn-success" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <h3>Projects</h3>
+
+        <ul class="list-group" id="projects-list"></ul>
     </div>
 </div>
 
+
+
+<script src="/js/chat.js"></script>
+
+
 <script>
-    const chatDisplay = document.getElementById('chat-display');
-    const messageInput = document.getElementById('message-input');
+
+    // const chatDisplay = document.getElementById('chat-display');
+    // const messageInput = document.getElementById('message-input');
 
     // Handle Enter key press
-    messageInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            sendMessage();
-        }
-    });
+    // messageInput.addEventListener('keydown', (event) => {
+    //     if (event.key === 'Enter') {
+    //         sendMessage();
+    //     }
+    // });
 
-    async function sendMessage() {
-        let message = messageInput.value.trim();
+    // async function sendMessage() {
+    //     let message = messageInput.value.trim();
 
-        if (!message) 
-            return;
+    //     if (!message) 
+    //         return;
 
-        addMessage("You", message);
+    //     addMessage("You", message);
 
-        disableChatInput();
-        let response = await sendMessageToServer(message);
-        enableChatInput();
-        clearChatInput();
+    //     disableChatInput();
+    //     let response = await sendMessageToServer(message);
+    //     enableChatInput();
+    //     clearChatInput();
 
-        addMessage("AI", response.reply, response.thought);
-    }
+    //     addMessage("AI", response.reply, response.thought);
+    // }
 
-    async function sendMessageToServer(message) {
-        let response = await fetch('api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(message)
-        });
+    // async function sendMessageToServer(message) {
+    //     let response = await fetch('api/chat', {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //         body: JSON.stringify(message)
+    //     });
 
-        if (!response.ok)
-            throw new Error('Network response was not ok');
+    //     if (!response.ok)
+    //         throw new Error('Network response was not ok');
 
-        return await response.json();
-    }
+    //     return await response.json();
+    // }
 
-    function addMessage(user, message, thought) {
-        var time = new Date().toTimeString().split(' ')[0];
+    // function addMessage(user, message, thought) {
+    //     var time = new Date().toTimeString().split(' ')[0];
 
-        var msg = document.createElement("div");
-        msg.classList.add("message");
-        msg.classList.add(user == "AI" ? user : "user");
+    //     var msg = document.createElement("div");
+    //     msg.classList.add("message");
+    //     msg.classList.add(user == "AI" ? user : "user");
 
-        if(thought && thought.length > 0) {
-            msg.innerHTML  =`
-                <label>${user}:</label>
-                <div class="content">
-                    <div class="thought">Thought:\n${thought}</div>
-                    <div class="reply">${message}</div>
-                </div>`;
-        }
-        else {
-            msg.innerHTML  =`
-                <label>${user}:</label>
-                <div class="content">
-                    <div class="reply noThought">${message}</div>
-                </div>`;
-        }
+    //     if(thought && thought.length > 0) {
+    //         msg.innerHTML  =`
+    //             <label>${user}:</label>
+    //             <div class="content">
+    //                 <div class="thought">Thought:\n${thought}</div>
+    //                 <div class="reply">${message}</div>
+    //             </div>`;
+    //     }
+    //     else {
+    //         msg.innerHTML  =`
+    //             <label>${user}:</label>
+    //             <div class="content">
+    //                 <div class="reply noThought">${message}</div>
+    //             </div>`;
+    //     }
 
-        chatDisplay.appendChild(msg);
-        chatDisplay.scrollTop = chatDisplay.scrollHeight;
-    }
+    //     chatDisplay.appendChild(msg);
+    //     chatDisplay.scrollTop = chatDisplay.scrollHeight;
+    // }
 
-    function clearChatInput() {
-        messageInput.value = '';
-    }
+    // function clearChatInput() {
+    //     messageInput.value = '';
+    // }
 
-    function disableChatInput() {
-        messageInput.disabled = true;
-    }
+    // function disableChatInput() {
+    //     messageInput.disabled = true;
+    // }
 
-    function enableChatInput() {
-        messageInput.disabled = false;
-    }
+    // function enableChatInput() {
+    //     messageInput.disabled = false;
+    // }
 </script>

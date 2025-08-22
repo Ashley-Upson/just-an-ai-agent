@@ -4,9 +4,13 @@ using cCoder.Security.Data.EF.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using JustAnAiAgent.Data;
 using JustAnAiAgent.Data.Interfaces;
+using JustAnAiAgent.Api;
+using JustAnAiAgent.Services;
 
 var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,11 +19,27 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSecurityApi((services, securityConfig) =>
 {
-    securityConfig.AddMSSQLModelProvider(services, builder.Configuration.GetConnectionString("SSO"));
+    securityConfig.AddMSSQLModelProvider(services, config.GetConnectionString("SSO"));
     securityConfig.UsePasswordHasherHashing(services);
 });
 
-builder.Services.AddDbContext<JustAnAiAgentDbContext>(options => options.UseSqlServer(config.GetConnectionString("JustAnAiAgent")));
+builder.Services.AddDbContext<JustAnAiAgentDbContext>(options =>
+{
+    options.UseSqlServer(config.GetConnectionString("JustAnAiAgent"));
+});
+
+builder.Services.AddDataServices(
+    builder.Configuration.GetConnectionString("JustAnAiAgent")
+);
+builder.Services.AddStandardServices();
+builder.Services.AddJustAnAiAgentApi();
+
+builder.Services.AddMvc(options =>
+{
+    options.EnableEndpointRouting = false;
+});
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 

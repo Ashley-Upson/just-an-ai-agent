@@ -1,4 +1,4 @@
-﻿namespace JustAnAiAgent.Data.Entities;
+﻿namespace JustAnAiAgent.Objects.Entities;
 
 public class ProjectTask
 {
@@ -18,13 +18,13 @@ public class ProjectTask
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     public DateTimeOffset? StartedAt { get; set; }
 
     public DateTimeOffset? CompletedAt {  get; set; }
 
-    public virtual Conversation Conversation { get; set; }
+    public virtual Conversation? Conversation { get; set; }
 
-    public virtual AgenticProject AgenticProject { get; set; }
+    public virtual AgenticProject? AgenticProject { get; set; }
 }

@@ -1,16 +1,16 @@
-﻿using JustAnAiAgent.Data.Entities;
+﻿using JustAnAiAgent.Objects.Entities;
 
 namespace JustAnAiAgent.Services.Foundation.Interfaces;
 
-interface IAgenticProjectService
+public interface IAgenticProjectService
 {
     IQueryable<AgenticProject> GetAll();
 
-    ValueTask<AgenticProject> Get(Guid id);
+    ValueTask<AgenticProject> GetAsync(Guid id);
 
-    ValueTask<AgenticProject> Add(AgenticProject project);
+    ValueTask<AgenticProject> AddAsync(AgenticProject project);
 
-    ValueTask<AgenticProject> Update(AgenticProject project);
+    ValueTask<AgenticProject> UpdateAsync(Guid id, AgenticProject project);
 
-    void Delete(AgenticProject project);
+    Task DeleteAsync(Guid id);
 }

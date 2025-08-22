@@ -1,16 +1,16 @@
-﻿using JustAnAiAgent.Data.Entities;
+﻿using JustAnAiAgent.Objects.Entities;
 
 namespace JustAnAiAgent.Services.Foundation.Interfaces;
 
-interface IMessageService
+public interface IMessageService
 {
     IQueryable<Message> GetAll();
 
-    ValueTask<Message> Get(Guid id);
+    ValueTask<Message> GetAsync(Guid id);
 
-    ValueTask<Message> Add(Message message);
+    ValueTask<Message> AddAsync(Message message);
 
-    ValueTask<Message> Update(Message message);
+    ValueTask<Message> UpdateAsync(Guid id, Message message);
 
-    void Delete(Message message);
+    Task DeleteAsync(Guid id);
 }

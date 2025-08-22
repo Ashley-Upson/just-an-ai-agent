@@ -1,12 +1,12 @@
-﻿using JustAnAiAgent.Data.Entities;
+﻿using JustAnAiAgent.Objects.Entities;
 
-namespace JustAnAiAgent.Data.Brokers.Interfaces;
+namespace JustAnAiAgent.Services.Foundation.Interfaces;
 
-interface IUserConversationService
+public interface IUserConversationService
 {
     IQueryable<UserConversation> GetAll();
 
-    ValueTask<UserConversation> Add(UserConversation userConversation);
+    ValueTask<UserConversation> AddAsync(UserConversation userConversation, bool ignoreAuth = false);
 
-    void Delete(UserConversation userConversation);
+    Task DeleteAsync(string userId, Guid conversationId);
 }

@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore.Design;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace JustAnAiAgent.Data.Interfaces;
 
-public interface IJustAnAiAgentDbContextFactory : IDesignTimeDbContextFactory<JustAnAiAgentDbContext>
+public interface IJustAnAiAgentDbContextFactory
 {
-    JustAnAiAgentDbContext CreateDbContext(bool ignoreAuthInfo = false);
+    JustAnAiAgentDbContext CreateDbContext();
 }

@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JustAnAiAgent.Objects.Entities;
+using JustAnAiAjent.Objects.Providers;
 
 namespace JustAnAiAgent.Data.Brokers.Interfaces;
 
-interface ILLMProviderBroker
+public interface ILLMProviderBroker
 {
-    
+    ValueTask<ProviderChatResponse> SendConversationToModelAsync(string model, Conversation conversation);
 }

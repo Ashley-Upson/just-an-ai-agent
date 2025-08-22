@@ -1,21 +1,30 @@
 ﻿using cCoder.Security.Objects;
 using JustAnAiAgent.Data.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JustAnAiAgent.Data;
 
-public class MSSQLJustAnAiAgentDbContextFactory() : IJustAnAiAgentDbContextFactory
+public class MSSQLJustAnAiAgentDbContextFactory : IJustAnAiAgentDbContextFactory
 {
-    private readonly string connectionString;
+    public IServiceProvider serviceProvider { get; }
 
-    public Func<bool, ISSOAuthInfo> GetAuthInfo { get; set; } =
-        (x) => new SSOAuthInfo { SSOUserId = "Guest" };
+    public MSSQLJustAnAiAgentDbContextFactory(IServiceProvider serviceProvider) =>
+        this.serviceProvider = serviceProvider;
 
-    public MSSQLJustAnAiAgentDbContextFactory(string connectionString) : this() =>
-        this.connectionString = connectionString;
-
-    public JustAnAiAgentDbContext CreateDbContext(bool ignoreAuthInfo = false) =>
-        new(GetAuthInfo(ignoreAuthInfo), new MSSQLJustAnAiAgentModelBuildProvider(connectionString ?? "AgentDb"));
+    public JustAnAiAgentDbContext CreateDbContext(DbContextOptions<JustAnAiAgentDbContext> options) =>
+        CreateDbContext();
 
     public JustAnAiAgentDbContext CreateDbContext(string[] args) =>
         CreateDbContext();
+
+    public JustAnAiAgentDbContext CreateDbContext() {
+        //JustAnAiAgentDbContext context = serviceProvider.GetService<JustAnAiAgentDbContext>();
+
+        JustAnAiAgentDbContext context = serviceProvider.CreateScope().ServiceProvider.GetService<JustAnAiAgentDbContext>();
+
+        context.AuthInfo = serviceProvider.GetService<ISSOAuthInfo>();
+
+        return context;
+    }
 }

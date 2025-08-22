@@ -1,31 +1,48 @@
-﻿using JustAnAiAgent.Data.Brokers.Interfaces;
-using JustAnAiAgent.Data.Entities;
+﻿using System.Security.Authentication;
+using cCoder.Security.Objects;
+using JustAnAiAgent.Data.Brokers.Interfaces;
+using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Data.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace JustAnAiAgent.Data.Brokers;
 
-public class MessageBroker(IJustAnAiAgentDbContextFactory contextFactory) : IMessageBroker
+public class MessageBroker(
+    IJustAnAiAgentDbContextFactory contextFactory,
+    ISSOAuthInfo authInfo) : IMessageBroker
 {
     public IQueryable<Message> GetAll()
     {
-        using var context = contextFactory.CreateDbContext();
+        var context = contextFactory.CreateDbContext();
 
-        IQueryable<Message> result = context.Messages;
+        IQueryable<Message> result = context.Messages
+            .Where(m => m.Conversation.Users.Any(uc => uc.UserId == authInfo.SSOUserId));
 
         return result;
     }
 
-    public async ValueTask<Message> Get(Guid id)
+    public async ValueTask<Message> GetAsync(Guid id)
     {
         using var context = contextFactory.CreateDbContext();
 
-        return await context.Messages.FindAsync(id);
+        return await context.Messages
+            .Where(m => m.Conversation.Users.Any(uc => uc.UserId == authInfo.SSOUserId))
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
-    public async ValueTask<Message> Add(Message message)
+    public async ValueTask<Message> AddAsync(Message message)
     {
         using var context = contextFactory.CreateDbContext();
+
+        Conversation conversation = await context.Conversations
+            .Where(c => c.Users.Any(u => u.UserId == authInfo.SSOUserId))
+            .FirstOrDefaultAsync(c => c.Id == message.ConversationId);
+
+        if(conversation is null)
+            throw new AuthenticationException("Access denied.");
+
+        message.UserId = authInfo.SSOUserId;
 
         EntityEntry<Message> entry = await context.Messages.AddAsync(message);
 
@@ -34,22 +51,46 @@ public class MessageBroker(IJustAnAiAgentDbContextFactory contextFactory) : IMes
         return entry.Entity;
     }
 
-    public async ValueTask<Message> Update(Message message)
+    public async ValueTask<Message> UpdateAsync(Guid id, Message message)
     {
         using var context = contextFactory.CreateDbContext();
 
-        EntityEntry<Message> entry = context.Messages.Update(message);
+        Message dbMessage = await GetAsync(id);
+
+        if (dbMessage is null)
+            throw new AuthenticationException("Access denied.");
+
+        Message update = new()
+        {
+            ConversationId = message.ConversationId,
+            UserId = message.UserId,
+            ModelId = message.ModelId,
+            UserPrompt = message.UserPrompt,
+            SystemPrompt = message.SystemPrompt,
+            ModelThought = message.ModelThought,
+            ModelResponse = message.ModelResponse,
+            ResponseReceivedAt = message.ResponseReceivedAt,
+            CreatedAt = message.CreatedAt,
+            UpdatedAt = message.UpdatedAt
+        };
+
+        EntityEntry<Message> entry = context.Messages.Update(update);
 
         await context.SaveChangesAsync();
 
         return entry.Entity;
     }
 
-    public async void Delete(Message message)
+    public async Task DeleteAsync(Guid id)
     {
         using var context = contextFactory.CreateDbContext();
 
-        context.Messages.Remove(new Message { Id = message.Id });
+        Message dbMessage = await GetAsync(id);
+
+        if (dbMessage is null)
+            throw new AuthenticationException("Access denied.");
+
+        context.Messages.Remove(new Message { Id = id });
 
         await context.SaveChangesAsync();
     }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JustAnAiAgent.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateInitialMigrations : Migration
+    public partial class GenerateInitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,12 +18,11 @@ namespace JustAnAiAgent.Data.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MessageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AdditionalContext = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Goal = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Goal = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    MessageId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -37,10 +36,10 @@ namespace JustAnAiAgent.Data.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    AgenticProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    AgenticProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -49,8 +48,7 @@ namespace JustAnAiAgent.Data.Migrations
                         name: "FK_Conversations_AgenticProjects_AgenticProjectId",
                         column: x => x.AgenticProjectId,
                         principalTable: "AgenticProjects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Conversations_AgenticProjects_ProjectId",
                         column: x => x.ProjectId,
@@ -72,7 +70,7 @@ namespace JustAnAiAgent.Data.Migrations
                     ModelResponse = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResponseReceivedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -82,7 +80,7 @@ namespace JustAnAiAgent.Data.Migrations
                         column: x => x.ConversationId,
                         principalTable: "Conversations",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -97,7 +95,7 @@ namespace JustAnAiAgent.Data.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AdditionalContext = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     StartedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
@@ -109,7 +107,7 @@ namespace JustAnAiAgent.Data.Migrations
                         column: x => x.ProjectId,
                         principalTable: "AgenticProjects",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_ProjectTasks_Conversations_ConversationId",
                         column: x => x.ConversationId,
@@ -123,8 +121,7 @@ namespace JustAnAiAgent.Data.Migrations
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ConversationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -134,18 +131,13 @@ namespace JustAnAiAgent.Data.Migrations
                         column: x => x.ConversationId,
                         principalTable: "Conversations",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AgenticProjects_MessageId",
                 table: "AgenticProjects",
                 column: "MessageId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AgenticProjects_MessageId1",
-                table: "AgenticProjects",
-                column: "MessageId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Conversations_AgenticProjectId",
@@ -183,15 +175,7 @@ namespace JustAnAiAgent.Data.Migrations
                 column: "MessageId",
                 principalTable: "Messages",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_AgenticProjects_Messages_MessageId1",
-                table: "AgenticProjects",
-                column: "MessageId1",
-                principalTable: "Messages",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
@@ -199,10 +183,6 @@ namespace JustAnAiAgent.Data.Migrations
         {
             migrationBuilder.DropForeignKey(
                 name: "FK_AgenticProjects_Messages_MessageId",
-                table: "AgenticProjects");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_AgenticProjects_Messages_MessageId1",
                 table: "AgenticProjects");
 
             migrationBuilder.DropTable(

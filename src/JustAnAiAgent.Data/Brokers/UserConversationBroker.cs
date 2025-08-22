@@ -1,24 +1,41 @@
-﻿using JustAnAiAgent.Data.Brokers.Interfaces;
-using JustAnAiAgent.Data.Entities;
+﻿using System.Security.Authentication;
+using cCoder.Security.Data.Brokers.Utility.Interfaces;
+using cCoder.Security.Objects;
+using JustAnAiAgent.Data.Brokers.Interfaces;
+using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Data.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace JustAnAiAgent.Data.Brokers;
 
-public class UserConversationBroker(IJustAnAiAgentDbContextFactory contextFactory) : IUserConversationBroker
+public class UserConversationBroker(
+    IJustAnAiAgentDbContextFactory contextFactory,
+    ISSOAuthInfo authInfo) : IUserConversationBroker
 {
     public IQueryable<UserConversation> GetAll()
     {
-        using var context = contextFactory.CreateDbContext();
+        var context = contextFactory.CreateDbContext();
 
-        IQueryable<UserConversation> result = context.UserConversations;
+        IQueryable<UserConversation> result = context.UserConversations
+                .Where(c => c.UserId == authInfo.SSOUserId);
 
         return result;
     }
 
-    public async ValueTask<UserConversation> Add(UserConversation userConversation)
+    public async ValueTask<UserConversation> AddAsync(UserConversation userConversation, bool ignoreAuth = false)
     {
         using var context = contextFactory.CreateDbContext();
+
+        if(!ignoreAuth)
+        {
+            Conversation conversation = await context.Conversations
+                .Where(c => c.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+                .FirstOrDefaultAsync(c => c.Id == userConversation.ConversationId);
+
+            if (conversation is null)
+                throw new AuthenticationException("Access denied.");
+        }
         
         EntityEntry<UserConversation> entry = await context.UserConversations.AddAsync(userConversation);
         
@@ -27,13 +44,20 @@ public class UserConversationBroker(IJustAnAiAgentDbContextFactory contextFactor
         return entry.Entity;
     }
 
-    public async void Delete(UserConversation userConversation)
+    public async Task DeleteAsync(string userId, Guid conversationId)
     {
         using var context = contextFactory.CreateDbContext();
 
+        Conversation conversation = await context.Conversations
+            .Where(c => c.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+            .FirstOrDefaultAsync(c => c.Id == conversationId);
+
+        if (conversation is null)
+            throw new AuthenticationException("Access denied.");
+
         context.UserConversations.Remove(new UserConversation {
-            UserId = userConversation.UserId,
-            ConversationId = userConversation.ConversationId
+            UserId = userId,
+            ConversationId = conversationId
         });
 
         await context.SaveChangesAsync();

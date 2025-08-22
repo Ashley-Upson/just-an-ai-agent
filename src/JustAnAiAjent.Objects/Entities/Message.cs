@@ -1,6 +1,4 @@
-﻿using cCoder.Security.Objects.Entities;
-
-namespace JustAnAiAgent.Data.Entities;
+﻿namespace JustAnAiAgent.Objects.Entities;
 
 public class Message
 {
@@ -24,11 +22,9 @@ public class Message
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 
-    public virtual SSOUser? User { get; set; }
+    public virtual Conversation? Conversation { get; set; }
 
-    public virtual Conversation Conversation { get; set; }
-
-    public virtual ICollection<AgenticProject> AgenticProjects { get; set; }
+    public virtual ICollection<AgenticProject>? AgenticProjects { get; set; } 
 }

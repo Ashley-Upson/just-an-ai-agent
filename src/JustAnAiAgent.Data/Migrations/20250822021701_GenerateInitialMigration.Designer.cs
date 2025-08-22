@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JustAnAiAgent.Data.Migrations
 {
     [DbContext(typeof(JustAnAiAgentDbContext))]
-    [Migration("20250728192511_CreateInitialMigrations")]
-    partial class CreateInitialMigrations
+    [Migration("20250822021701_GenerateInitialMigration")]
+    partial class GenerateInitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace JustAnAiAgent.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.AgenticProject", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.AgenticProject", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -38,49 +38,41 @@ namespace JustAnAiAgent.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Goal")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("MessageId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("MessageId1")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MessageId");
 
-                    b.HasIndex("MessageId1");
-
                     b.ToTable("AgenticProjects");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Conversation", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Conversation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AgenticProjectId")
+                    b.Property<Guid?>("AgenticProjectId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -90,7 +82,7 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
@@ -102,7 +94,7 @@ namespace JustAnAiAgent.Data.Migrations
                     b.ToTable("Conversations");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Message", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Message", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -130,7 +122,7 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Property<string>("SystemPrompt")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("UserId")
@@ -147,7 +139,7 @@ namespace JustAnAiAgent.Data.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.ProjectTask", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.ProjectTask", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -182,7 +174,7 @@ namespace JustAnAiAgent.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("Id");
@@ -194,7 +186,7 @@ namespace JustAnAiAgent.Data.Migrations
                     b.ToTable("ProjectTasks");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.UserConversation", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.UserConversation", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
@@ -205,9 +197,6 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
                     b.HasKey("UserId", "ConversationId");
 
                     b.HasIndex("ConversationId");
@@ -215,59 +204,51 @@ namespace JustAnAiAgent.Data.Migrations
                     b.ToTable("UserConversations");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.AgenticProject", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.AgenticProject", b =>
                 {
-                    b.HasOne("JustAnAiAgent.Data.Entities.Message", null)
+                    b.HasOne("JustAnAiAgent.Objects.Entities.Message", "Message")
                         .WithMany("AgenticProjects")
                         .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("JustAnAiAgent.Data.Entities.Message", "Message")
-                        .WithMany()
-                        .HasForeignKey("MessageId1")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Message");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Conversation", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Conversation", b =>
                 {
-                    b.HasOne("JustAnAiAgent.Data.Entities.AgenticProject", "AgenticProject")
+                    b.HasOne("JustAnAiAgent.Objects.Entities.AgenticProject", "AgenticProject")
                         .WithMany()
-                        .HasForeignKey("AgenticProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AgenticProjectId");
 
-                    b.HasOne("JustAnAiAgent.Data.Entities.AgenticProject", null)
+                    b.HasOne("JustAnAiAgent.Objects.Entities.AgenticProject", null)
                         .WithMany("Conversations")
                         .HasForeignKey("ProjectId");
 
                     b.Navigation("AgenticProject");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Message", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Message", b =>
                 {
-                    b.HasOne("JustAnAiAgent.Data.Entities.Conversation", "Conversation")
+                    b.HasOne("JustAnAiAgent.Objects.Entities.Conversation", "Conversation")
                         .WithMany("Messages")
                         .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Conversation");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.ProjectTask", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.ProjectTask", b =>
                 {
-                    b.HasOne("JustAnAiAgent.Data.Entities.Conversation", "Conversation")
+                    b.HasOne("JustAnAiAgent.Objects.Entities.Conversation", "Conversation")
                         .WithMany()
                         .HasForeignKey("ConversationId");
 
-                    b.HasOne("JustAnAiAgent.Data.Entities.AgenticProject", "AgenticProject")
+                    b.HasOne("JustAnAiAgent.Objects.Entities.AgenticProject", "AgenticProject")
                         .WithMany("ProjectTasks")
                         .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("AgenticProject");
@@ -275,32 +256,32 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Navigation("Conversation");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.UserConversation", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.UserConversation", b =>
                 {
-                    b.HasOne("JustAnAiAgent.Data.Entities.Conversation", "Conversation")
+                    b.HasOne("JustAnAiAgent.Objects.Entities.Conversation", "Conversation")
                         .WithMany("Users")
                         .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Conversation");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.AgenticProject", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.AgenticProject", b =>
                 {
                     b.Navigation("Conversations");
 
                     b.Navigation("ProjectTasks");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Conversation", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Conversation", b =>
                 {
                     b.Navigation("Messages");
 
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("JustAnAiAgent.Data.Entities.Message", b =>
+            modelBuilder.Entity("JustAnAiAgent.Objects.Entities.Message", b =>
                 {
                     b.Navigation("AgenticProjects");
                 });

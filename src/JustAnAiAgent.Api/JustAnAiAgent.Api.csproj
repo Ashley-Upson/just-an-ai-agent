@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JustAnAiAgent.Services\JustAnAiAgent.Services.csproj" />
+    <ProjectReference Include="..\JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj" />
+  </ItemGroup>
+
+</Project>

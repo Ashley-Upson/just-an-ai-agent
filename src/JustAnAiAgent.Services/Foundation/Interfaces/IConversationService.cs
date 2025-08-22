@@ -1,16 +1,18 @@
-﻿using JustAnAiAgent.Data.Entities;
+﻿using JustAnAiAgent.Objects.Entities;
 
 namespace JustAnAiAgent.Services.Foundation.Interfaces;
 
-interface IConversationService
+public interface IConversationService
 {
     IQueryable<Conversation> GetAll();
 
-    ValueTask<Conversation> Get(Guid id);
+    ValueTask<Conversation> GetAsync(Guid id);
 
-    ValueTask<Conversation> Add(Conversation conversation);
+    ValueTask<Conversation> GetWithMessagesAsync(Guid id);
 
-    ValueTask<Conversation> Update(Conversation conversation);
+    ValueTask<Conversation> AddAsync(Conversation conversation);
 
-    void Delete(Conversation conversation);
+    ValueTask<Conversation> UpdateAsync(Guid id, Conversation conversation);
+
+    Task DeleteAsync(Guid id, bool ignoreAuth = false);
 }

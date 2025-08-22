@@ -16,14 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="Views\Account\Register.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\JustAnAiAgent.Api\JustAnAiAgent.Api.csproj" />
     <ProjectReference Include="..\JustAnAiAgent.Data\JustAnAiAgent.Data.csproj" />
   </ItemGroup>
 </Project>
