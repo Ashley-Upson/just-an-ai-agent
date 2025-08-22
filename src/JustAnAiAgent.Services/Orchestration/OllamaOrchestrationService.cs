@@ -36,6 +36,6 @@ public class OllamaOrchestrationService(
 
         dbMessage.ResponseReceivedAt = DateTimeOffset.UtcNow;
 
-        return await messageService.UpdateAsync(message.Id, message);
+        return await messageService.UpdateAsync(message.Id, dbMessage);
     }
 }
