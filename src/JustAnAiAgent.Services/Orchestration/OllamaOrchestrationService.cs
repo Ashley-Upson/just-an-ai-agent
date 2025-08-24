@@ -26,7 +26,8 @@ public class OllamaOrchestrationService(
 
         conversation.Messages.Add(dbMessage);
 
-        ProviderChatResponse response = await ollamaService.SendConversationToModelAsync(dbMessage.ModelId, conversation);
+        var modelId = dbMessage.ModelId.Replace("<Ollama>", "");
+        ProviderChatResponse response = await ollamaService.SendConversationToModelAsync(modelId, conversation);
 
         if (response.thought is not null)
             dbMessage.ModelThought = response.thought;

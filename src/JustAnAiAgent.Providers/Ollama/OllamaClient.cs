@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
+using JustAnAiAjent.Objects.Ollama;
 using JustAnAiAjent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
@@ -34,6 +35,13 @@ class OllamaClient
         OllamaResponse response = await httpResponse.Content.ReadFromJsonAsync<OllamaResponse>();
 
         return response;
+    }
+
+    public async ValueTask<OllamaTagsResponse> GetAvailableModelsAsync()
+    {
+        HttpResponseMessage httpResponse = await ApiClient.GetAsync("tags");
+        httpResponse.EnsureSuccessStatusCode();
+        return await httpResponse.Content.ReadFromJsonAsync<OllamaTagsResponse>();
     }
 
     private OllamaRequest BuildBasicChatRequest(ProviderChatRequest request)

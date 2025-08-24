@@ -14,6 +14,8 @@ public class Conversation
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    public DateTimeOffset? LastMessageSentAt { get; set; }
+
     public virtual AgenticProject? AgenticProject { get; set; }
 
     public virtual ICollection<Message>? Messages { get; set; }

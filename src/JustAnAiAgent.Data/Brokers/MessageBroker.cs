@@ -62,6 +62,7 @@ public class MessageBroker(
 
         Message update = new()
         {
+            Id = message.Id,
             ConversationId = message.ConversationId,
             UserId = message.UserId,
             ModelId = message.ModelId,

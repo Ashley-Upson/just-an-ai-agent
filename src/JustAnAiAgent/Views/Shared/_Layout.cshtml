@@ -11,7 +11,7 @@
         window.api = new Api(`${location.protocol}//${location.host}/Api`);
     </script>
 </head>
-<body>
+<body data-bs-theme ="dark">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">JustAnAiAgent | @ViewData["Title"]</a>
@@ -46,7 +46,7 @@
         </div>
     </nav>
 
-    <div class="container-fluid my-5">
+    <div class="container-fluid my-1">
         @RenderBody()
     </div>
 

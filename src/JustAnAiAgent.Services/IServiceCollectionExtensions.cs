@@ -25,6 +25,7 @@ public static class IServiceCollectionExtensions
 
         // Processing services.
         services.AddTransient<IConversationProcessingService, ConversationProcessingService>();
+        services.AddTransient<IMessageProcessingService, MessageProcessingService>();
 
         // Provider processing services.
 

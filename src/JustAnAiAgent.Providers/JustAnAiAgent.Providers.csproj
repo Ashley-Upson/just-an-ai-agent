@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Ollama\Objects\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj" />
   </ItemGroup>
 

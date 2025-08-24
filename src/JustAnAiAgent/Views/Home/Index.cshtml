@@ -18,11 +18,34 @@
     <div class="col-md-8">
         <h1 id="title">JustAnAiAgent</h1>
 
-        <ul class="list-group" id="messages-box"></ul>
+        <ul class="list-unstyled" id="messages-box"></ul>
 
-        <div name="chat-toolbar">
-            <input type="text" id="message-input" class="form-control-sm" placeholder="Type your message..." />
-            <button class="btn btn-sm btn-success" onclick="sendMessage()">Send</button>
+        <div class="input-group input-group-sm">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="model-select-button" data-bs-toggle="dropdown" aria-expanded="false">Select model</button>
+            <ul class="dropdown-menu" id="model-select"></ul>
+
+            <textarea class="form-control" rows="5" id="message-input" placeholder="Send a message..."></textarea>
+
+            <button type="button" class="btn btn-sm btn-success" id="send-message-button">
+                Send
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#">Send chat</a></li>
+                <li><a class="dropdown-item" href="#">Send to agent</a></li>
+                <li><a class="dropdown-item" href="#">Send with file</a></li>
+            </ul>
+        </div>
+
+        <div class="input-group input-group-sm" id="message-send-info-box">
+            <span class="input-group-text" id="selected-model">No model selected</span>
+            <input class="form-control disabled" disabled />
+            <span class="input-group-text text-end" id="current-action-span">Idle.</span>
+            <span class="input-group-text">Sending to chat</span>
         </div>
     </div>
     <div class="col-md-2">
@@ -32,10 +55,7 @@
     </div>
 </div>
 
-
-
 <script src="/js/chat.js"></script>
-
 
 <script>
 

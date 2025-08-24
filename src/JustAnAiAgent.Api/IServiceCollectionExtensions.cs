@@ -1,6 +1,4 @@
-﻿using JustAnAiAgent.Objects.Entities;
-using Microsoft.OData.ModelBuilder;
-using Microsoft.AspNetCore.OData;
+﻿using Microsoft.AspNetCore.OData;
 
 namespace JustAnAiAgent.Api;
 
@@ -15,8 +13,7 @@ public static class IServiceCollectionExtensions
             })
             .AddOData(opt =>
              {
-                 opt
-                     .Select()
+                 opt.Select()
                      .Filter()
                      .Expand()
                      .OrderBy()

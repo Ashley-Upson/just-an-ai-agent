@@ -1,12 +1,12 @@
 ﻿using JustAnAiAgent.Objects.Entities;
-using JustAnAiAgent.Services.Foundation.Interfaces;
+using JustAnAiAgent.Services.Processing.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 
 namespace JustAnAiAgent.Api.Controllers;
 
 [Route("/Api/Message")]
-public class MessageController(IMessageService messageService) : ControllerBase
+public class MessageController(IMessageProcessingService messageService) : ControllerBase
 {
     [EnableQuery]
     [HttpGet]
