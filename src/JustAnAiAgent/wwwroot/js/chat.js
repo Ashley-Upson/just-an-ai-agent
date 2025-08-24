@@ -233,7 +233,7 @@ function renderModelResponse(message, renderStats = true) {
 
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(message.ModelResponse, ['list-group-item-dark'])
+            makeListItem(marked.parse(message.ModelResponse), ['list-group-item-dark'], true)
         ])
     ]);
 
@@ -244,9 +244,14 @@ function makeListGroup(listItems = [], classes = []) {
     return makeElementWithClasses('ul', ['list-group', ...classes], listItems);
 }
 
-function makeListItem(text, classes = []) {
+function makeListItem(text, classes = [], html = false) {
     var item = makeElementWithClasses('li', ['list-group-item', ...classes]);
-    item.innerText = text;
+
+    if (html)
+        item.innerHTML = text;
+    else
+        item.innerText = text;
+
     return item;
 }
 
