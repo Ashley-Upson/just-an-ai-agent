@@ -6,6 +6,8 @@ using JustAnAiAgent.Data;
 using JustAnAiAgent.Data.Interfaces;
 using JustAnAiAgent.Api;
 using JustAnAiAgent.Services;
+using JustAnAiAgent.MCP.DirectoryServices;
+using JustAnAiAgent.MCP.MCP;
 
 var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
@@ -64,5 +66,21 @@ app.UseSession();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+var treeTool = new GetDirectoryTree();
+treeTool.FilteredFolders = new List<string>()
+{
+    ".vs",
+    "bin",
+    "obj",
+    ".git"
+};
+
+var tree = treeTool.Execute([new ToolParameterInput() {
+    Name = "path",
+    Value = "."
+}]);
+
+Console.WriteLine(tree);
 
 await app.RunAsync();

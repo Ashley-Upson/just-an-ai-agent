@@ -8,6 +8,10 @@ var modelSelectButton = document.getElementById('model-select-button');
 var selectedModel = document.getElementById('selected-model');
 var sendMessageButton = document.getElementById('send-message-button');
 
+var newConversationName = document.getElementById('new-conversation-name');
+var newConversationDescription = document.getElementById('new-conversation-description');
+var newConversationAddButton = document.getElementById('create-conversation');
+
 var activeConversation = null;
 var selectedModelId = null;
 
@@ -27,15 +31,29 @@ var modeMessageTemplate = ``;
 async function loadConversations() {
     setCurrentAction('Loading conversations...');
 
-    var conversations = await api.get('Conversation?$orderBy=LastmessageSentAt');
+    var conversations = await api.get('Conversation?$orderBy=LastmessageSentAt desc');
+
+    var conversationItems = [];
 
     for (var conversation of conversations) {
-        var element = makeElementWithClasses('li', ['list-group-item', 'd-flex', 'justify-content-between', 'align-items-start']);
-        element.innerHTML = conversationTemplate
-            .replaceAll('{ID}', conversation.Id)
-            .replace('{NAME}', conversation.Name);
-        conversationsList.appendChild(element);
+        var listItem = makeElementWithClasses('li', ['list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'conversation']);
+
+        var link = makeElementWithClasses('div', ['ms-2', 'me-auto']);
+        link.setAttribute('data-action', 'load-conversation');
+        link.setAttribute('data-conversation-id', conversation.Id);
+        link.innerText = conversation.Name;
+
+        var deleteButton = makeElementWithClasses('button', ['badge', 'text-bg-danger']);
+        deleteButton.setAttribute('data-action', 'delete-conversation');
+        deleteButton.setAttribute('data-conversation-id', conversation.Id);
+        deleteButton.innerText = 'X';
+
+        listItem.append(link, deleteButton);
+        conversationItems.push(listItem);
     }
+
+    conversationsList.innerHTML = '';
+    conversationsList.append(...conversationItems);
 
     setCurrentActionIdle();
 
@@ -48,6 +66,7 @@ async function loadConversation(id) {
     var conversation = await api.get(`Conversation/${id}?$expand=Messages`);
 
     chatTitle.innerText = `JustAnAiAgent | ${conversation.Name}`;
+    messagesBox.innerHTML = '';
 
     for (var message of conversation.Messages) {
         addMessageToMessagesBox(message, 'user');
@@ -59,7 +78,8 @@ async function loadConversation(id) {
             addMessageToMessagesBox(message, 'model-response', message.ModelThought == null);
     }
 
-    setActiveModel(conversation.Messages[conversation.Messages.length - 1].ModelId);
+    if(conversation.Messages && conversation.Messages.length > 0)
+        setActiveModel(conversation.Messages[conversation.Messages.length - 1].ModelId);
 
     setCurrentActionIdle();
 
@@ -143,6 +163,8 @@ async function sendMessage(e) {
     sendMessageButton.disabled = false;
 
     setCurrentActionIdle();
+
+    loadConversations();
 }
 
 function setActiveModel(id) {
@@ -150,16 +172,6 @@ function setActiveModel(id) {
 
     var split = splitModelId(id);
     selectedModel.innerText = `${split.provider} | ${split.model}`;
-}
-
-async function start() {
-    var conversations = await loadConversations();
-    var models = await loadModels();
-
-    if (conversations.length > 0)
-        await loadConversation(conversations[0].Id);
-
-    sendMessageButton.addEventListener('click', sendMessage);
 }
 
 function addMessageToMessagesBox(message, perspective, showStats = true) {
@@ -267,7 +279,7 @@ function setCurrentAction(text) {
 }
 
 function setCurrentActionIdle() {
-    currentActionSpan.innerText = 'Idle';
+    currentActionSpan.innerText = 'Idle.';
 }
 
 function splitModelId(id) {
@@ -280,6 +292,60 @@ function splitModelId(id) {
         provider: provider,
         model: model
     };
+}
+
+async function handleLoadConversationEvent(id) {
+    await loadConversation(id);
+}
+
+async function handleCreateConversationEvent(e) {
+    var name = newConversationName.value;
+    var description = newConversationDescription.value;
+
+    if (!name) {
+        window.alert('Conversation name is required.');
+        return;
+    }
+
+    var conversation = await api.post('Conversation', {
+        Name: name,
+        Description: description
+    });
+
+    newConversationName.value = null;
+    newConversationDescription.value = null;
+
+    var modal = bootstrap.Modal.getInstance(document.getElementById('new-conversation-modal'));
+    modal.hide();
+
+    await loadConversation(conversation.Id);
+    await loadConversations();
+}
+
+function initEventListeners() {
+    sendMessageButton.addEventListener('click', sendMessage);
+
+    conversationsList.addEventListener('click', function (e) {
+        var action = e.target.getAttribute('data-action');
+
+        if (action == 'load-conversation')
+            handleLoadConversationEvent(e.target.getAttribute('data-conversation-id'));
+
+        if (action == 'delete-conversation')
+            handleDeleteConversationEvent(e.target.getAttribute('data-conversation-id'));
+    });
+
+    newConversationAddButton.addEventListener('click', handleCreateConversationEvent);
+}
+
+async function start() {
+    var conversations = await loadConversations();
+    var models = await loadModels();
+
+    if (conversations.length > 0)
+        await loadConversation(conversations[0].Id);
+
+    initEventListeners();
 }
 
 start();

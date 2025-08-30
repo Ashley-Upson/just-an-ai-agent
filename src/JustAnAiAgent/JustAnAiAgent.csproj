@@ -22,5 +22,6 @@
   <ItemGroup>
     <ProjectReference Include="..\JustAnAiAgent.Api\JustAnAiAgent.Api.csproj" />
     <ProjectReference Include="..\JustAnAiAgent.Data\JustAnAiAgent.Data.csproj" />
+    <ProjectReference Include="..\JustAnAiAgent.MCP\JustAnAiAgent.MCP.csproj" />
   </ItemGroup>
 </Project>

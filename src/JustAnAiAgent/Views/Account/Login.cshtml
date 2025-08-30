@@ -3,6 +3,7 @@
     ViewData["SSOUserId"] = "Guest";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var success = ViewData["Success"] as string;
+    var error = ViewData["Error"] as string;
 }
 
 <div class="row justify-content-center">
@@ -14,6 +15,13 @@
                     <p>@success</p>
                 </div>
             }
+            @if(!string.IsNullOrWhiteSpace(error))
+            {
+                <div class="alert alert-danger text-center">
+                    <p>@error</p>
+                </div>
+            }
+
             <div class="mb-3">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text" id="username-text">Username</span>

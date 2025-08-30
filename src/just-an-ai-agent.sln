@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Api", "JustAn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAjent.Objects", "JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj", "{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.MCP", "JustAnAiAgent.MCP\JustAnAiAgent.MCP.csproj", "{649766F8-280A-4853-B247-0B6E36109124}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -50,6 +52,10 @@ Global
 		{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{649766F8-280A-4853-B247-0B6E36109124}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{649766F8-280A-4853-B247-0B6E36109124}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{649766F8-280A-4853-B247-0B6E36109124}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{649766F8-280A-4853-B247-0B6E36109124}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

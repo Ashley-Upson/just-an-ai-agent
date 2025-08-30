@@ -16,7 +16,7 @@ public class AccountController(
     : Controller
 {
     [HttpGet("Login")]
-    public IActionResult Login([FromQuery] string success)
+    public IActionResult Login([FromQuery] string success, [FromQuery] string error)
     {
         string userId = CurrentUserId();
 
@@ -24,6 +24,7 @@ public class AccountController(
             return Redirect("/");
 
         ViewBag.Success = success;
+        ViewBag.Error = error;
 
         return View();
     }

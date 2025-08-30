@@ -9,11 +9,11 @@
     <div class="col-md-2">
         <h3>Conversations</h3>
 
-        <button type="button" class="btn btn-sm btn-primary" name="new-conversation">
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#new-conversation-modal">
             New Conversation
         </button>
 
-        <ul class="list-group mt-1 w-75" id="conversations-list"></ul>
+        <ul class="list-group mt-1" id="conversations-list"></ul>
     </div>
     <div class="col-md-8">
         <h1 id="title">JustAnAiAgent</h1>
@@ -54,6 +54,40 @@
         <ul class="list-group" id="projects-list"></ul>
     </div>
 </div>
+
+<div class="modal fade" id="new-conversation-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">New Conversation</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="conversation-name-text">Name</span>
+                        <input type="text" class="form-control" name="Name" id="new-conversation-name" aria-describedby="conversation-name-text" required />
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="conversation-description-text">Description</span>
+                        <input type="text" class="form-control" name="Description" id="new-conversation-description" aria-describedby="conversation-description-text" required />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="create-conversation">Add</button>
+                </div>
+            </div<
+        </div>
+    </div>
+</div>
+
+                        
 
 <script src="/js/chat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>

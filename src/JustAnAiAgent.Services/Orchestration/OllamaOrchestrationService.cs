@@ -24,6 +24,9 @@ public class OllamaOrchestrationService(
 
         Message dbMessage = await messageService.AddAsync(message);
 
+        conversation.LastMessageSentAt = DateTimeOffset.UtcNow;
+        await conversationService.UpdateAsync(conversation.Id, conversation);
+
         conversation.Messages.Add(dbMessage);
 
         var modelId = dbMessage.ModelId.Replace("<Ollama>", "");
