@@ -30,7 +30,7 @@
 	
 	<ItemGroup>
 		<ProjectReference Include="..\JustAnAiAgent.Providers\JustAnAiAgent.Providers.csproj" />
-		<ProjectReference Include="..\JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj" />
+		<ProjectReference Include="..\JustAnAiAgent.Objects\JustAnAiAgent.Objects.csproj" />
 	</ItemGroup>
 
 </Project>

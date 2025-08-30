@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json;
 using JustAnAiAgent.MCP.MCP;
-using JustAnAiAgent.MCP.MCP.GetDirectoryTree;
 
 namespace JustAnAiAgent.MCP.DirectoryServices;
 
-public class GetDirectoryTree
+public class GetDirectoryTree : McpTool
 {
     public string Name = "get-directory-tree";
 
@@ -22,7 +20,7 @@ public class GetDirectoryTree
 
     public IEnumerable<string> FilteredFolders = new List<string>();
 
-    public string Execute(IEnumerable<ToolParameterInput> parameters)
+    public override string Execute(IEnumerable<ToolParameterInput> parameters)
     {
         var pathParameter = parameters.Where(p => p.Name == "path").FirstOrDefault();
 
@@ -31,43 +29,55 @@ public class GetDirectoryTree
 
         var path = pathParameter.Value;
 
-        IEnumerable<ItemNode> tree = GetDirectoryTreeFromPath(path);
+        IEnumerable<string> tree = GetDirectoryTreeFromPath(path);
 
-        return JsonSerializer.Serialize(tree);
+        return string.Join("\n", tree);
     }
 
-    private IEnumerable<ItemNode> GetDirectoryTreeFromPath(string path)
-    {
-        var tree = new List<ItemNode>();
+    public override IEnumerable<ToolParameter> GetParameters() =>
+        Parameters;
 
+    public override ToolDefinition GetToolDefinition()
+    {
+        return new()
+        {
+            Name = Name,
+            Description = "List all files recursively in a given directory",
+            Type = "function",
+            Parameters = Parameters,
+            Required = Parameters.Where(p => p.Required).Select(p => p.Name).ToArray()
+        };
+    }
+
+    private string[] GetDirectoryTreeFromPath(string path)
+    {
+        DirectoryInfo directory = new DirectoryInfo(path);
+
+        string parentPath = directory.Parent.FullName;
+
+        string[] tree = GetFilesAndFolders(path);
+
+        return tree.Select(i => i.Replace(parentPath, "")).ToArray();
+    }
+
+    private string[] GetFilesAndFolders(string path)
+    {
         DirectoryInfo directory = new DirectoryInfo(path);
         FileSystemInfo[] items = directory.GetFileSystemInfos();
+        List<string> tree = new();
 
         foreach (FileSystemInfo item in items)
         {
             if (item is DirectoryInfo && FilteredFolders.Contains(item.Name))
                 continue;
 
-            if (item is DirectoryInfo)
-            {
-                tree.Add(new()
-                {
-                    Name = item.Name,
-                    Type = "directory",
-                    Children = GetDirectoryTreeFromPath(item.FullName)
-                });
-            }
+            if(item is FileInfo)
+                tree.Add(item.FullName);
 
-            if (item is FileInfo)
-            {
-                tree.Add(new()
-                {
-                    Name = item.Name,
-                    Type = "file",
-                });
-            }
+            if (item is DirectoryInfo)
+                tree.AddRange(GetFilesAndFolders(item.FullName));
         }
 
-        return tree;
+        return tree.ToArray();
     }
 }

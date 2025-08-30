@@ -18,7 +18,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Providers", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Api", "JustAnAiAgent.Api\JustAnAiAgent.Api.csproj", "{87CFF909-0385-4C8C-B201-B0E538807192}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAjent.Objects", "JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj", "{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.Objects", "JustAnAiAgent.Objects\JustAnAiAgent.Objects.csproj", "{BE34B7C7-3F6B-4681-9F23-1B49AA486E55}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustAnAiAgent.MCP", "JustAnAiAgent.MCP\JustAnAiAgent.MCP.csproj", "{649766F8-280A-4853-B247-0B6E36109124}"
 EndProject

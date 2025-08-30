@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj" />
+    <ProjectReference Include="..\JustAnAiAgent.Objects\JustAnAiAgent.Objects.csproj" />
   </ItemGroup>
 
 </Project>

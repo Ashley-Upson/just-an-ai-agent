@@ -34,6 +34,7 @@ builder.Services.AddDataServices(
     builder.Configuration.GetConnectionString("JustAnAiAgent")
 );
 builder.Services.AddStandardServices();
+builder.Services.AddMcpTools();
 builder.Services.AddJustAnAiAgentApi();
 
 builder.Services.AddMvc(options =>
@@ -66,21 +67,5 @@ app.UseSession();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
-var treeTool = new GetDirectoryTree();
-treeTool.FilteredFolders = new List<string>()
-{
-    ".vs",
-    "bin",
-    "obj",
-    ".git"
-};
-
-var tree = treeTool.Execute([new ToolParameterInput() {
-    Name = "path",
-    Value = "."
-}]);
-
-Console.WriteLine(tree);
 
 await app.RunAsync();

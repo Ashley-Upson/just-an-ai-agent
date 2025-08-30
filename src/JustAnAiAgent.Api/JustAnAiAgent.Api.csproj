@@ -11,8 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\JustAnAiAgent.MCP\JustAnAiAgent.MCP.csproj" />
     <ProjectReference Include="..\JustAnAiAgent.Services\JustAnAiAgent.Services.csproj" />
-    <ProjectReference Include="..\JustAnAiAjent.Objects\JustAnAiAjent.Objects.csproj" />
+    <ProjectReference Include="..\JustAnAiAgent.Objects\JustAnAiAgent.Objects.csproj" />
   </ItemGroup>
 
 </Project>

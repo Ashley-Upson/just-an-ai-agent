@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JustAnAiAgent.MCP.MCP;
 
 namespace JustAnAiAgent.MCP.Interfaces;
 
 public interface IMcpTool
 {
-    
+    IEnumerable<ToolParameter> GetParameters();
+
+    ToolDefinition GetToolDefinition();
+
+    string Execute(IEnumerable<ToolParameterInput> parameters);
 }
