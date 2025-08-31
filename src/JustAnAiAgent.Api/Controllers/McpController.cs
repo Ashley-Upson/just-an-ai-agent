@@ -1,9 +1,7 @@
-﻿using JustAnAiAgent.MCP.Interfaces;
+﻿using System.ComponentModel.DataAnnotations;
+using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
-using JustAnAiAgent.Objects.Entities;
-using JustAnAiAgent.Services.Processing.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OData.Query;
 
 namespace JustAnAiAgent.Api.Controllers;
 
@@ -25,13 +23,18 @@ public class McpController(IEnumerable<IMcpTool> tools) : ControllerBase
     }
 
     [HttpPost("Execute/{name}")]
-    public async Task<IActionResult> Execute([FromBody] IEnumerable<ToolParameterInput> parameters)
+    public async Task<IActionResult> Execute([FromRoute] string name, [FromBody] IEnumerable<ToolParameterInput> parameters)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        //IMcpTool tool = tools.FirstOrDefault(t => t.Name );
+        IMcpTool tool = tools.FirstOrDefault(t => t.Name == name);
 
-        return Ok();
+        if (tool == null)
+            throw new ValidationException($"Tool {name} does not exist.");
+
+        string result = await tool.Execute(parameters);
+
+        return Ok(result);
     }
 }

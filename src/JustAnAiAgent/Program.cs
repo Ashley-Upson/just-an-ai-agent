@@ -6,8 +6,6 @@ using JustAnAiAgent.Data;
 using JustAnAiAgent.Data.Interfaces;
 using JustAnAiAgent.Api;
 using JustAnAiAgent.Services;
-using JustAnAiAgent.MCP.DirectoryServices;
-using JustAnAiAgent.MCP.MCP;
 
 var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()
@@ -30,9 +28,7 @@ builder.Services.AddDbContext<JustAnAiAgentDbContext>(options =>
     options.UseSqlServer(config.GetConnectionString("JustAnAiAgent"));
 });
 
-builder.Services.AddDataServices(
-    builder.Configuration.GetConnectionString("JustAnAiAgent")
-);
+builder.Services.AddDataServices();
 builder.Services.AddStandardServices();
 builder.Services.AddMcpTools();
 builder.Services.AddJustAnAiAgentApi();

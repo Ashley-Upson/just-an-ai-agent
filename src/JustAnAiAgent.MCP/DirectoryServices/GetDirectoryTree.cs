@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 
 namespace JustAnAiAgent.MCP.DirectoryServices;
 
-public class GetDirectoryTree : McpTool
+public class GetDirectoryTree : IMcpTool
 {
-    public string Name = "get-directory-tree";
+    public string Name => "get-directory-tree";
 
     public IEnumerable<ToolParameter> Parameters = new List<ToolParameter>()
     {
@@ -20,7 +21,7 @@ public class GetDirectoryTree : McpTool
 
     public IEnumerable<string> FilteredFolders = new List<string>();
 
-    public override string Execute(IEnumerable<ToolParameterInput> parameters)
+    public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters)
     {
         var pathParameter = parameters.Where(p => p.Name == "path").FirstOrDefault();
 
@@ -34,10 +35,10 @@ public class GetDirectoryTree : McpTool
         return string.Join("\n", tree);
     }
 
-    public override IEnumerable<ToolParameter> GetParameters() =>
+    public IEnumerable<ToolParameter> GetParameters() =>
         Parameters;
 
-    public override ToolDefinition GetToolDefinition()
+    public ToolDefinition GetToolDefinition()
     {
         return new()
         {

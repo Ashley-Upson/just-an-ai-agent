@@ -7,7 +7,7 @@ namespace JustAnAiAgent.Data;
 
 public static class IServiceCollectionExtensions
 {
-    public static void AddDataServices(this IServiceCollection services, string connectionString)
+    public static void AddDataServices(this IServiceCollection services)
     {
         services.AddScoped<IJustAnAiAgentDbContextFactory, MSSQLJustAnAiAgentDbContextFactory>();
 

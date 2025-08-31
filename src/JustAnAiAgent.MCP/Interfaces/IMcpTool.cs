@@ -4,9 +4,11 @@ namespace JustAnAiAgent.MCP.Interfaces;
 
 public interface IMcpTool
 {
+    string Name { get; }
+
     IEnumerable<ToolParameter> GetParameters();
 
     ToolDefinition GetToolDefinition();
 
-    string Execute(IEnumerable<ToolParameterInput> parameters);
+    ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters);
 }
