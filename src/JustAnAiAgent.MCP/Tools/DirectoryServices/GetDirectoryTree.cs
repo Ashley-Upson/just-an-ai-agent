@@ -2,13 +2,13 @@
 using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 
-namespace JustAnAiAgent.MCP.DirectoryServices;
+namespace JustAnAiAgent.MCP.Tools.DirectoryServices;
 
 public class GetDirectoryTree : IMcpTool
 {
     public string Name => "get-directory-tree";
 
-    public IEnumerable<ToolParameter> Parameters = new List<ToolParameter>()
+    private IEnumerable<ToolParameter> Parameters = new List<ToolParameter>()
     {
         new()
         {
@@ -19,16 +19,30 @@ public class GetDirectoryTree : IMcpTool
         }
     };
 
-    public IEnumerable<string> FilteredFolders = new List<string>();
+    public List<string> FilteredFolders = new();
 
     public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters)
     {
         var pathParameter = parameters.Where(p => p.Name == "path").FirstOrDefault();
+        var filterParameter = parameters.Where(p => p.Name == "filter").FirstOrDefault();
 
         if (pathParameter == null)
             throw new ValidationException("Parameter 'path' not specified.");
 
-        var path = pathParameter.Value;
+        if(filterParameter is null)
+            FilteredFolders.AddRange([
+                ".vs",
+                ".git",
+                "bin",
+                "obj"
+            ]);
+        else
+            if (filterParameter.Value is IEnumerable<object> values)
+                FilteredFolders.AddRange(values.Select(i => i?.ToString() ?? string.Empty).Where(i => i != null));
+            else
+                throw new ValidationException("Filter parameter value is not in the expected format.");
+
+        var path = pathParameter.Value.ToString();
 
         IEnumerable<string> tree = GetDirectoryTreeFromPath(path);
 
