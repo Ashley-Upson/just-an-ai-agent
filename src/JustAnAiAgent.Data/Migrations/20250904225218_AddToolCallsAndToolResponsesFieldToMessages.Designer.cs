@@ -4,6 +4,7 @@ using JustAnAiAgent.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JustAnAiAgent.Data.Migrations
 {
     [DbContext(typeof(JustAnAiAgentDbContext))]
-    partial class JustAnAiAgentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250904225218_AddToolCallsAndToolResponsesFieldToMessages")]
+    partial class AddToolCallsAndToolResponsesFieldToMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -135,6 +138,7 @@ namespace JustAnAiAgent.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserPrompt")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

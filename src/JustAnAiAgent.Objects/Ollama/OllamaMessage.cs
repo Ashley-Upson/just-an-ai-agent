@@ -8,5 +8,9 @@ public class OllamaMessage
 
     public string thinking { get; set; }
 
-    public ICollection<OllamaToolCall> tool_calls { get; set; }
+    public string tool_name { get; set; }
+
+    public IEnumerable<OllamaToolCall> tool_calls { get; set; }
+
+    public IEnumerable<string> images { get; set; }
 }

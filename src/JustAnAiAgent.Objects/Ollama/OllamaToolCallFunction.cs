@@ -2,7 +2,7 @@
 
 public class OllamaToolCallFunction
 {
-    public string name {  get; set; }
+    public string name { get; set; }
 
-    public IDictionary<string, string> parameters { get; set; }
+    public Dictionary<string, string> arguments { get; set; }
 }

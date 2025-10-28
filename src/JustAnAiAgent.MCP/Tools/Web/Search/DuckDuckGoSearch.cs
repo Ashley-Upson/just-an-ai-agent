@@ -11,18 +11,21 @@ public class DuckDuckGoSearch : IMcpTool
 {
     public string Name => "duck-duck-go-search";
 
-    private IEnumerable<ToolParameter> Parameters = new List<ToolParameter>()
+    private ToolParameters Parameters = new()
     {
-        new()
-        {
-            Name = "query",
-            Description = "The search term.",
-            Type = "string",
-            Required = true,
-        }
+        Type = "object",
+        Properties = new List<ToolParameterProperty> {
+            new() {
+                Name = "query",
+                Type = "string",
+                Description = "The search term.",
+                Required = true,
+            }
+        },
+        Required = new List<string> { "path" },
     };
 
-    public IEnumerable<ToolParameter> GetParameters() =>
+    public ToolParameters GetParameters() =>
         Parameters;
 
     public ToolDefinition GetToolDefinition()
@@ -33,7 +36,7 @@ public class DuckDuckGoSearch : IMcpTool
             Description = "Do a web search using Duck Duck Go",
             Type = "function",
             Parameters = Parameters,
-            Required = Parameters.Where(p => p.Required).Select(p => p.Name).ToArray()
+            Required = Parameters.Properties.Where(p => p.Required).Select(p => p.Name).ToArray()
         };
     }
 

@@ -8,16 +8,31 @@ public class GetDirectoryTree : IMcpTool
 {
     public string Name => "get-directory-tree";
 
-    private IEnumerable<ToolParameter> Parameters = new List<ToolParameter>()
+    private ToolParameters Parameters = new()
     {
-        new()
-        {
-            Name = "path",
-            Description = "The root path for the tree being requested.",
-            Type = "string",
-            Required = true,
-        }
+        Type = "object",
+        Properties = new List<ToolParameterProperty> {
+            new() {
+                Name = "path",
+                Type = "string",
+                Description = "The root path for the tree being requested.",
+                Required = true,
+            }
+        },
+        Required = new List<string> { "path" },
     };
+
+    public ToolDefinition GetToolDefinition()
+    {
+        return new()
+        {
+            Name = Name,
+            Description = "List all files recursively in a given directory",
+            Type = "function",
+            Parameters = Parameters,
+            Required = Parameters.Properties.Where(p => p.Required).Select(p => p.Name).ToArray()
+        };
+    }
 
     public List<string> FilteredFolders = new();
 
@@ -49,20 +64,8 @@ public class GetDirectoryTree : IMcpTool
         return string.Join("\n", tree);
     }
 
-    public IEnumerable<ToolParameter> GetParameters() =>
+    public ToolParameters GetParameters() =>
         Parameters;
-
-    public ToolDefinition GetToolDefinition()
-    {
-        return new()
-        {
-            Name = Name,
-            Description = "List all files recursively in a given directory",
-            Type = "function",
-            Parameters = Parameters,
-            Required = Parameters.Where(p => p.Required).Select(p => p.Name).ToArray()
-        };
-    }
 
     private string[] GetDirectoryTreeFromPath(string path)
     {

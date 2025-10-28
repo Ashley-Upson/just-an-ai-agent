@@ -7,4 +7,6 @@ public class ProviderChatResponse
     public string thought { get; set; }
 
     public string message { get; set; }
+
+    public dynamic tool_calls { get; set; }
 }

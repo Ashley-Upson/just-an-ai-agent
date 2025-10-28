@@ -71,6 +71,8 @@ public class MessageBroker(
             ModelThought = message.ModelThought,
             ModelResponse = message.ModelResponse,
             ResponseReceivedAt = message.ResponseReceivedAt,
+            ToolCalls = message.ToolCalls,
+            ToolResponses = message.ToolResponses,
             CreatedAt = message.CreatedAt,
             UpdatedAt = message.UpdatedAt
         };

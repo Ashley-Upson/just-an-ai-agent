@@ -6,7 +6,7 @@ public interface IMcpTool
 {
     string Name { get; }
 
-    IEnumerable<ToolParameter> GetParameters();
+    ToolParameters GetParameters();
 
     ToolDefinition GetToolDefinition();
 

@@ -76,6 +76,12 @@ async function loadConversation(id) {
 
         if (message.ModelResponse)
             addMessageToMessagesBox(message, 'model-response', message.ModelThought == null);
+
+        if (message.ToolCalls)
+            addMessageToMessagesBox(message, 'tool-calls');
+
+        if (message.ToolResponses)
+            addMessageToMessagesBox(message, 'tool-responses');
     }
 
     if(conversation.Messages && conversation.Messages.length > 0)
@@ -158,6 +164,12 @@ async function sendMessage(e) {
     if (response.ModelResponse)
         addMessageToMessagesBox(response, 'model-response', response.ModelThought == null);
 
+    if (message.ToolCalls)
+        addMessageToMessagesBox(message, 'tool-calls');
+
+    if (message.ToolResponses)
+        addMessageToMessagesBox(message, 'tool-responses');
+
     messageInput.disabled = false;
     messageInput.value = '';
     sendMessageButton.disabled = false;
@@ -183,6 +195,12 @@ function addMessageToMessagesBox(message, perspective, showStats = true) {
 
     if (perspective == 'model-response')
         renderModelResponse(message, showStats);
+
+    if (perspective == 'tool-calls')
+        renderToolCalls(message);
+
+    if (perspective == 'tool-responses')
+        renderToolResponses(message);
 
     messagesBox.scrollTo({
         top: messagesBox.scrollHeight,
@@ -250,6 +268,47 @@ function renderModelResponse(message, renderStats = true) {
     ]);
 
     messagesBox.appendChild(messageItem);
+}
+
+function renderToolCalls(message) {
+    var titleBar = makeElementWithClasses('li', [], [
+        makeListGroup([
+            makeListItem('Using MCP tools...')
+        ], ['list-group-horizontal'])
+    ]);
+
+    var toolCalls = JSON.stringify(JSON.parse(message.ToolCalls), null, 4);
+
+    var messageItem = makeElementWithClasses('li', [], [
+        makeListGroup([
+            makeListItem(`<pre>${toolCalls}</pre>`, ['list-group-item-primary'], true)
+        ])
+    ]);
+
+    messagesBox.append(titleBar, messageItem);
+}
+
+function renderToolResponses(message) {
+    var titleBar = makeElementWithClasses('li', [], [
+        makeListGroup([
+            makeListItem('Tool responses')
+        ], ['list-group-horizontal'])
+    ]);
+
+    var json = JSON.parse(message.ToolResponses);
+
+    for (var i in json)
+        json[i] = JSON.parse(json[i]);
+
+    var toolResponses = JSON.stringify(json, null, 4);
+
+    var messageItem = makeElementWithClasses('li', [], [
+        makeListGroup([
+            makeListItem(`<pre>${toolResponses.substring(0, 1000)}</pre>`, ['list-group-item-success'])
+        ])
+    ]);
+
+    messagesBox.append(titleBar, messageItem);
 }
 
 function makeListGroup(listItems = [], classes = []) {
