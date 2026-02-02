@@ -7,9 +7,9 @@ using JustAnAiAgent.MCP.MCP.DuckDuckGoSearch;
 
 namespace JustAnAiAgent.MCP.Tools.Web.Search;
 
-public class DuckDuckGoSearch : IMcpTool
+public class GoogleSearch : IMcpTool
 {
-    public string Name => "duck-duck-go-search";
+    public string Name => "google-search";
 
     private ToolParameters Parameters = new()
     {
@@ -33,7 +33,7 @@ public class DuckDuckGoSearch : IMcpTool
         return new()
         {
             Name = Name,
-            Description = "Do a web search using Duck Duck Go",
+            Description = "Do a web search using Google",
             Type = "function",
             Parameters = Parameters,
             Required = Parameters.Properties.Where(p => p.Required).Select(p => p.Name).ToArray()

@@ -78,4 +78,12 @@ public class AgenticProjectBroker(
 
         await context.SaveChangesAsync();
     }
+
+    //public async Task DeleteProjectsForConversationAsync(Guid id)
+    //{
+    //    using var context = contextFactory.CreateDbContext();
+
+    //    context.AgenticProjects
+    //        .Where(ap => ap.)
+    //}
 }
