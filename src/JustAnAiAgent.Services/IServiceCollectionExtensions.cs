@@ -20,8 +20,8 @@ public static class IServiceCollectionExtensions
         services.AddTransient<IProjectTaskService, ProjectTaskService>();
 
         // Provider foundation services.
-        services.AddScoped<OllamaProviderService>();
-        services.AddScoped<ILLMProviderService, OllamaProviderService>();
+        services.AddScoped<LlmProviderService>();
+        services.AddScoped<ILLMProviderService, LlmProviderService>();
 
         // Processing services.
         services.AddTransient<IConversationProcessingService, ConversationProcessingService>();

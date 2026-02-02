@@ -6,7 +6,7 @@ using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Services.Foundation;
 
-public class OllamaProviderService(ILLMProviderBroker providerBroker) : ILLMProviderService
+public class LlmProviderService(ILLMProviderBroker providerBroker) : ILLMProviderService
 {
     public async ValueTask<string[]> GetAvailableModelsAsync() =>
         await providerBroker.GetAvailableModelsAsync();

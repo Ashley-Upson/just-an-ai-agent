@@ -6,7 +6,7 @@ namespace JustAnAiAgent.Providers.Factories;
 
 public class ModelProviderFactory(IConfiguration configuration) : IModelProviderFactory
 {
-    private const string DefaultOllamaApiUrl = "http://192.168.1.127";
+    private const string DefaultOllamaApiUrl = "http://localhost";
     private const int DefaultOllamaPort = 11434;
 
     public IModelProvider CreateProvider(string providerName)
