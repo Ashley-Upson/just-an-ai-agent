@@ -4,11 +4,10 @@ using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
-using JustAnAiAgent.Services.Foundation;
 using JustAnAiAgent.Services.Foundation.Interfaces;
 using JustAnAiAgent.Services.Orchestration.Interfaces;
 using JustAnAiAgent.Services.Processing.Interfaces;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Services.Orchestration;
 
@@ -16,7 +15,7 @@ public class OllamaOrchestrationService(
     IConversationProcessingService conversationService,
     IMessageService messageService,
     IEnumerable<IMcpTool> tools,
-    OllamaProviderService ollamaService) : IOllamaOrchestrationService
+    ILLMProviderService llmProviderService) : IOllamaOrchestrationService
 {
     public async ValueTask<Message> AddMessageAndSendToModel(Guid id, Message message)
     {
@@ -34,8 +33,7 @@ public class OllamaOrchestrationService(
 
         conversation.Messages.Add(dbMessage);
 
-        string modelId = dbMessage.ModelId.Replace("<Ollama>", "");
-        ProviderChatResponse response = await ollamaService.SendConversationToModelWithToolsAsync(modelId, conversation, tools.Select(t => t.GetToolDefinition()));
+        ProviderChatResponse response = await llmProviderService.SendConversationToModelWithToolsAsync(dbMessage.ModelId, conversation, tools.Select(t => t.GetToolDefinition()));
 
         Message currentMessage = await SaveResponseData(dbMessage, response);
 
@@ -112,8 +110,7 @@ public class OllamaOrchestrationService(
             toolsResponseMessage = await messageService.AddAsync(toolsResponseMessage);
             conversation.Messages.Add(toolsResponseMessage);
 
-            string modelId = message.ModelId.Replace("<Ollama>", "");
-            ProviderChatResponse responseToToolsResults = await ollamaService.SendConversationToModelWithToolsAsync(modelId, conversation, tools.Select(t => t.GetToolDefinition()));
+            ProviderChatResponse responseToToolsResults = await llmProviderService.SendConversationToModelWithToolsAsync(message.ModelId, conversation, tools.Select(t => t.GetToolDefinition()));
 
             Message currentMessage = await SaveResponseData(toolsResponseMessage, responseToToolsResults);
 

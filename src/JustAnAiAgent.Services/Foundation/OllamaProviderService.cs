@@ -1,12 +1,12 @@
-﻿using JustAnAiAgent.Data.Brokers;
+﻿using JustAnAiAgent.Data.Brokers.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Services.Foundation.Interfaces;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Services.Foundation;
 
-public class OllamaProviderService(OllamaProviderBroker providerBroker) : ILLMProviderService
+public class OllamaProviderService(ILLMProviderBroker providerBroker) : ILLMProviderService
 {
     public async ValueTask<string[]> GetAvailableModelsAsync() =>
         await providerBroker.GetAvailableModelsAsync();

@@ -1,6 +1,8 @@
 ﻿using JustAnAiAgent.Data.Brokers;
 using JustAnAiAgent.Data.Brokers.Interfaces;
 using JustAnAiAgent.Data.Interfaces;
+using JustAnAiAgent.Providers.Factories;
+using JustAnAiAgent.Providers.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JustAnAiAgent.Data;
@@ -19,7 +21,7 @@ public static class IServiceCollectionExtensions
         services.AddTransient<IProjectTaskBroker, ProjectTaskBroker>();
 
         // Model provider brokers.
-        services.AddScoped<OllamaProviderBroker>();
-        services.AddScoped<ILLMProviderBroker, OllamaProviderBroker>();
+        services.AddScoped<IModelProviderFactory, ModelProviderFactory>();
+        services.AddScoped<ILLMProviderBroker, LlmProviderBroker>();
     }
 }

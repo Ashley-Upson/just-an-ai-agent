@@ -1,6 +1,6 @@
 ﻿using JustAnAiAgent.Objects.Entities;
 
-namespace JustAnAiAjent.Objects.Providers;
+namespace JustAnAiAgent.Objects.Providers;
 
 public class ProviderChatRequest
 {

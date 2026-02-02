@@ -1,4 +1,4 @@
-﻿namespace JustAnAiAjent.Objects.Ollama;
+﻿namespace JustAnAiAgent.Objects.Ollama;
 
 public class OllamaTagsResponse
 {

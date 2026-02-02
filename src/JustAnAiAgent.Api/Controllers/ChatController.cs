@@ -1,8 +1,5 @@
 ﻿using JustAnAiAgent.Objects.Entities;
-using JustAnAiAgent.Providers;
-using JustAnAiAgent.Services.Foundation;
 using JustAnAiAgent.Services.Orchestration.Interfaces;
-using JustAnAiAjent.Objects.Providers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JustAnAiAgent.Api.Controllers;

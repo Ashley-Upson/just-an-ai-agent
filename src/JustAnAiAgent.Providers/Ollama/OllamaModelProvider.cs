@@ -2,8 +2,7 @@
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
 using JustAnAiAgent.Providers.Interfaces;
-using JustAnAiAjent.Objects.Ollama;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
 

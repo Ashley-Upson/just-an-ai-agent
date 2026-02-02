@@ -6,6 +6,7 @@ using JustAnAiAgent.Data;
 using JustAnAiAgent.Data.Interfaces;
 using JustAnAiAgent.Api;
 using JustAnAiAgent.Services;
+using JustAnAiAgent.MCP;
 
 var config = new ConfigurationBuilder()
     .AddEnvironmentVariables()

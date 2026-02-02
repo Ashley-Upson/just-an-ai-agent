@@ -1,6 +1,6 @@
 ﻿using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Data.Brokers.Interfaces;
 

@@ -4,7 +4,7 @@ using JustAnAiAgent.MCP.Tools.Web.Browsing;
 using JustAnAiAgent.MCP.Tools.Web.Search;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JustAnAiAgent.Services;
+namespace JustAnAiAgent.MCP;
 
 public static class IServiceCollectionExtensions
 {
