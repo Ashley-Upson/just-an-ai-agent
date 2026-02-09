@@ -1,9 +1,8 @@
 ﻿using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Providers.Interfaces;
-using JustAnAiAgent.Providers.Ollama.Objects;
-using JustAnAiAjent.Objects.Ollama;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
+using JustAnAiAgent.Objects.Ollama;
 
 namespace JustAnAiAgent.Providers.Ollama;
 

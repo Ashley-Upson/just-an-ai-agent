@@ -1,4 +1,4 @@
-﻿namespace JustAnAiAjent.Objects.Providers;
+﻿namespace JustAnAiAgent.Objects.Providers;
 
 public class ProviderChatResponse
 {

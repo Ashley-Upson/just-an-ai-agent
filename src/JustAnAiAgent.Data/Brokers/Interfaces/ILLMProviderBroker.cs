@@ -9,5 +9,6 @@ public interface ILLMProviderBroker
     ValueTask<string[]> GetAvailableModelsAsync();
 
     ValueTask<ProviderChatResponse> SendConversationToModelAsync(string model, Conversation conversation);
+
     ValueTask<ProviderChatResponse> SendConversationToModelWithToolsAsync(string model, Conversation conversation, IEnumerable<ToolDefinition> tools);
 }

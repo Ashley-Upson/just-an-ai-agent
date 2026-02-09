@@ -1,4 +1,4 @@
-﻿using JustAnAiAgent.Providers.Ollama.Objects;
+﻿using JustAnAiAgent.Objects.Ollama;
 
 namespace JustAnAiAgent.Providers.Ollama.Brokers.Interfaces;
 

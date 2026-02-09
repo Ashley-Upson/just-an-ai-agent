@@ -3,9 +3,7 @@ using System.Text.Json;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
-using JustAnAiAgent.Providers.Ollama.Objects;
-using JustAnAiAjent.Objects.Ollama;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
 
