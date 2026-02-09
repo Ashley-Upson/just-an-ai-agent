@@ -7,7 +7,7 @@ using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
 
-class OllamaClient
+public class OllamaClient
 {
     private string ApiUrl {  get; set; }
 

@@ -14,6 +14,7 @@ public class ModelProviderFactory(IConfiguration configuration) : IModelProvider
         if (string.IsNullOrWhiteSpace(providerName))
             throw new ArgumentException("Provider name must be provided.", nameof(providerName));
 
+        // Todo: hook this into DI registered providers.
         return providerName.Trim().ToLowerInvariant() switch
         {
             "ollama" => CreateOllamaProvider(),
@@ -32,6 +33,7 @@ public class ModelProviderFactory(IConfiguration configuration) : IModelProvider
 
     private OllamaModelProvider CreateOllamaProvider()
     {
+        // To do: this needs to come from user providers.
         string apiUrl = configuration["LLMProviders:Ollama:ApiUrl"] ?? DefaultOllamaApiUrl;
         int port = configuration.GetValue<int?>("LLMProviders:Ollama:Port") ?? DefaultOllamaPort;
 
