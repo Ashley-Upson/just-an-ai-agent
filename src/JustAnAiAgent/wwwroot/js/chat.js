@@ -69,23 +69,31 @@ async function loadConversation(id) {
     messagesBox.innerHTML = '';
 
     for (var message of conversation.Messages) {
-        addMessageToMessagesBox(message, 'user');
+        switch (message.Type) {
+            case 'user':
+                addMessageToMessagesBox(message, 'user');
+                break;
 
-        if (message.ModelThought)
-            addMessageToMessagesBox(message, 'model-thought');
+            case 'thought':
+                addMessageToMessagesBox(message, 'model-thought');
+                break;
 
-        if (message.ModelResponse)
-            addMessageToMessagesBox(message, 'model-response', message.ModelThought == null);
+            case 'response':
+                addMessageToMessagesBox(message, 'model-response');
+                break;
 
-        if (message.ToolCalls)
-            addMessageToMessagesBox(message, 'tool-calls');
+            case 'tool-calls':
+                addMessageToMessagesBox(message, 'tool-calls');
+                break;
 
-        if (message.ToolResponses)
-            addMessageToMessagesBox(message, 'tool-responses');
+            case 'tool-results':
+                addMessageToMessagesBox(message, 'tool-responses');
+                break;
+        }
     }
 
     if(conversation.Messages && conversation.Messages.length > 0)
-        setActiveModel(conversation.Messages[conversation.Messages.length - 1].ModelId);
+        setActiveModel(conversation.Messages[conversation.Messages.length - 1]?.ModelId);
 
     setCurrentActionIdle();
 
@@ -142,7 +150,7 @@ async function sendMessage(e) {
     var message = messageInput.value.trim();
 
     addMessageToMessagesBox({
-        UserPrompt: message,
+        Content: message,
         CreatedAt: new Date().toISOString(),
         ModelId: selectedModelId
     }, 'user');
@@ -154,21 +162,36 @@ async function sendMessage(e) {
 
     var response = await api.post(`Chat/ConversationWithNewMessage/${activeConversation.Id}`, {
         ConversationId: activeConversation.Id,
-        UserPrompt: message,
-        ModelId: selectedModelId
+        Content: message,
+        ModelId: selectedModelId,
+        Type: 'user',
+        ContentType: 'string'
     });
 
-    if (response.ModelThought)
-        addMessageToMessagesBox(response, 'model-thought');
+    switch (response.Type) {
+        case 'user':
+            addMessageToMessagesBox(response, 'user');
+            break;
 
-    if (response.ModelResponse)
-        addMessageToMessagesBox(response, 'model-response', response.ModelThought == null);
+        case 'thought':
+            addMessageToMessagesBox(response, 'model-thought');
+            break;
 
-    if (message.ToolCalls)
-        addMessageToMessagesBox(message, 'tool-calls');
+        case 'response':
+            addMessageToMessagesBox(response, 'model-response');
+            break;
 
-    if (message.ToolResponses)
-        addMessageToMessagesBox(message, 'tool-responses');
+        case 'tool-calls':
+            addMessageToMessagesBox(response, 'tool-calls');
+            break;
+
+        case 'tool-results':
+            addMessageToMessagesBox(response, 'tool-responses');
+            break;
+
+        default:
+            break;
+    }
 
     messageInput.disabled = false;
     messageInput.value = '';
@@ -218,7 +241,7 @@ function renderUserMessage(message) {
 
     var messageItem = makeElementWithClasses('li', ['d-flex', 'justify-content-end'], [
         makeListGroup([
-            makeListItem(message.UserPrompt, ['list-group-item-info'])
+            makeListItem(message.Content, ['list-group-item-info'])
         ])
     ]);
 
@@ -239,7 +262,7 @@ function renderModelThought(message) {
 
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(message.ModelThought, ['list-group-item-light'])
+            makeListItem(message.Content, ['list-group-item-light'])
         ])
     ]);
 
@@ -263,7 +286,7 @@ function renderModelResponse(message, renderStats = true) {
 
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(marked.parse(message.ModelResponse), ['list-group-item-dark'], true)
+            makeListItem(marked.parse(message.Content), ['list-group-item-dark'], true)
         ])
     ]);
 
@@ -277,7 +300,7 @@ function renderToolCalls(message) {
         ], ['list-group-horizontal'])
     ]);
 
-    var toolCalls = JSON.stringify(JSON.parse(message.ToolCalls), null, 4);
+    var toolCalls = JSON.stringify(JSON.parse(message.Content), null, 4);
 
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
@@ -295,7 +318,7 @@ function renderToolResponses(message) {
         ], ['list-group-horizontal'])
     ]);
 
-    var json = JSON.parse(message.ToolResponses);
+    var json = JSON.parse(message.Content);
 
     for (var i in json)
         json[i] = JSON.parse(json[i]);
@@ -342,6 +365,14 @@ function setCurrentActionIdle() {
 }
 
 function splitModelId(id) {
+    if (id == null) {
+        return {
+            id: null,
+            provider: null,
+            model: null
+        };
+    }
+
     var indexOfGt = id.indexOf('>') + 1;
     var provider = id.substring(0, indexOfGt).replace('<', '').replace('>', '');
     var model = id.substring(indexOfGt);

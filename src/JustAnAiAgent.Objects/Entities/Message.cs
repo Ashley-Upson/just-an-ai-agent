@@ -1,4 +1,6 @@
-﻿namespace JustAnAiAgent.Objects.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace JustAnAiAgent.Objects.Entities;
 
 public class Message
 {
@@ -22,7 +24,9 @@ public class Message
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    [JsonIgnore]
     public virtual Conversation? Conversation { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<AgenticProject>? AgenticProjects { get; set; } 
 }
