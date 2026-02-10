@@ -8,19 +8,13 @@ public class Message
 
     public string? UserId { get; set; }
 
-    public string ModelId { get; set; }
+    public string Type { get; set; }
 
-    public string? UserPrompt { get; set; }
+    public string? ModelId { get; set; }
 
-    public string? SystemPrompt { get; set; }
+    public string Content { get; set; }
 
-    public string? ModelThought { get; set; }
-
-    public string? ModelResponse { get; set; }
-
-    public string? ToolCalls { get; set; }
-
-    public string? ToolResponses { get; set; }
+    public string ContentType { get; set; }
 
     public DateTimeOffset? ResponseReceivedAt { get; set; }
 

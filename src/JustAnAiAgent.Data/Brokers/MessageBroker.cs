@@ -66,13 +66,10 @@ public class MessageBroker(
             ConversationId = message.ConversationId,
             UserId = message.UserId,
             ModelId = message.ModelId,
-            UserPrompt = message.UserPrompt,
-            SystemPrompt = message.SystemPrompt,
-            ModelThought = message.ModelThought,
-            ModelResponse = message.ModelResponse,
+            Type = message.Type,
+            Content = message.Content,
+            ContentType = message.ContentType,
             ResponseReceivedAt = message.ResponseReceivedAt,
-            ToolCalls = message.ToolCalls,
-            ToolResponses = message.ToolResponses,
             CreatedAt = message.CreatedAt,
             UpdatedAt = message.UpdatedAt
         };

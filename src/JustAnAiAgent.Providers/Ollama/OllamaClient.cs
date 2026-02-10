@@ -94,46 +94,49 @@ class OllamaClient
     private IEnumerable<OllamaMessage> OllamaMessagesFromMessage(Message message)
     {
         List<OllamaMessage> messages = new();
-        
-        if(message.SystemPrompt is not null)
-        {
-            messages.Add(new()
-            {
-                role = "system",
-                content = message.SystemPrompt
-            });
-        }
 
-        if(message.UserPrompt is not null)
+        switch (message.Type)
         {
-            messages.Add(new()
-            {
-                role = "user",
-                content = message.UserPrompt
-            });
-        }
+            case "system":
+                messages.Add(new()
+                {
+                    role = "system",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ResponseReceivedAt is not null)
-        {
-            messages.Add(new()
-            {
-                role = "assistant",
-                content = message.ModelResponse
-            });
-        }
+            case "user":
+                messages.Add(new()
+                {
+                    role = "user",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ToolCalls is not null)
-        {
-            messages.Add(new()
-            {
-                role = "assistant",
-                content = "",
-                tool_calls = BuildToolCallsFromMessage(message)
-            });
-        }
+            case "response":
+                messages.Add(new()
+                {
+                    role = "assistant",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ToolResponses is not null)
-            messages.AddRange(BuildToolResultsFromMessage(message));
+            case "tool-calls":
+                messages.Add(new()
+                {
+                    role = "assistant",
+                    content = "",
+                    tool_calls = BuildToolCallsFromMessage(message)
+                });
+                break;
+
+            case "tool-results":
+                messages.AddRange(BuildToolResultsFromMessage(message));
+                break;
+
+            default:
+                break;
+        }
 
         return messages;
     }
@@ -162,17 +165,22 @@ class OllamaClient
             }
         });
 
-    private IEnumerable<OllamaToolCall> BuildToolCallsFromMessage(Message message) =>
-        JsonSerializer.Deserialize<IEnumerable<OllamaToolCall>>(message.ToolCalls);
+    private IEnumerable<OllamaToolCall> BuildToolCallsFromMessage(Message message)
+    {
+        if (message.Type != "tool-calls")
+            return [];
+
+        return JsonSerializer.Deserialize<IEnumerable<OllamaToolCall>>(message.Content);
+    }
 
     private IEnumerable<OllamaMessage> BuildToolResultsFromMessage(Message message)
     {
         List<OllamaMessage> results = new();
 
-        if(message.ToolResponses is null)
+        if(message.Type != "tool-results")
             return results;
 
-        var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.ToolResponses);
+        var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Content);
 
         foreach (var item in responses)
         {

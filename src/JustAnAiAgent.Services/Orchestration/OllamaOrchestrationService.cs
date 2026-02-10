@@ -35,21 +35,55 @@ public class OllamaOrchestrationService(
 
         ProviderChatResponse response = await llmProviderService.SendConversationToModelWithToolsAsync(dbMessage.ModelId, conversation, tools.Select(t => t.GetToolDefinition()));
 
-        Message currentMessage = await SaveResponseData(dbMessage, response);
+        IEnumerable<Message> messages = await SaveResponseData(dbMessage, response);
 
-        return await HandleModelResponse(conversation, currentMessage, response);
+        return await HandleModelResponse(conversation, messages.Last(), response);
     }
 
-    private async ValueTask<Message> SaveResponseData(Message message, ProviderChatResponse response)
+    private async ValueTask<IEnumerable<Message>> SaveResponseData(Message message, ProviderChatResponse response)
     {
-        if (response.thought is not null)
-            message.ModelThought = response.thought;
+        List<Message> messages = [];
+
+        if(response.thought is not null)
+        {
+            messages.Add(await messageService.AddAsync(new()
+            {
+                ConversationId = message.ConversationId,
+                ModelId = message.ModelId,
+                UserId = message.UserId,
+                Type = "thought",
+                ContentType = "string",
+                Content = response.thought,
+                ResponseReceivedAt = DateTimeOffset.UtcNow,
+            }));
+        }
 
         if (response.message is not null)
-            message.ModelResponse = response.message;
+        {
+            messages.Add(await messageService.AddAsync(new()
+            {
+                ConversationId = message.ConversationId,
+                ModelId = message.ModelId,
+                UserId = message.UserId,
+                Type = "response",
+                ContentType = "string",
+                Content = response.message,
+                ResponseReceivedAt = DateTimeOffset.UtcNow,
+            }));
+        }
 
         if (response.tool_calls is not null)
-            message.ToolCalls = JsonSerializer.Serialize(response.tool_calls);
+        {
+            messages.Add(await messageService.AddAsync(new()
+            {
+                ConversationId = message.ConversationId,
+                ModelId = message.ModelId,
+                UserId = message.UserId,
+                Type = "tool-calls",
+                ContentType = "json",
+                Content = JsonSerializer.Serialize(response.tool_calls)
+            }));
+        }
         else
         {
             // Because Ollama doesn't send all tool calls to the tool_calls property.
@@ -65,16 +99,21 @@ public class OllamaOrchestrationService(
                         function = c
                     }));
 
-                    message.ToolCalls = serialized;
-                    response.tool_calls = attemptDeserialize;
+                    messages.Add(await messageService.AddAsync(new()
+                    {
+                        ConversationId = message.ConversationId,
+                        ModelId = message.ModelId,
+                        UserId = message.UserId,
+                        Type = "tool-calls",
+                        ContentType = "json",
+                        Content = serialized
+                    }));
                 }
             }
             catch { }
         }
 
-        message.ResponseReceivedAt = DateTimeOffset.UtcNow;
-
-        return await messageService.UpdateAsync(message.Id, message);
+        return messages;
     }
 
     private async ValueTask<Message> HandleModelResponse(Conversation conversation, Message message, ProviderChatResponse response)
@@ -82,6 +121,15 @@ public class OllamaOrchestrationService(
         if (response.tool_calls is not null)
         {
             Dictionary<string, string> toolResponses = new Dictionary<string, string>();
+
+            Message toolResults = await messageService.AddAsync(new()
+            {
+                ConversationId = message.ConversationId,
+                ModelId = message.ModelId,
+                UserId = message.UserId,
+                Type = "tool-results",
+                ContentType = "json",
+            });
 
             foreach (var call in response.tool_calls)
             {
@@ -91,31 +139,18 @@ public class OllamaOrchestrationService(
                     toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments)));
             }
 
-            message.ToolResponses = JsonSerializer.Serialize(toolResponses);
-            await messageService.UpdateAsync(message.Id, message);
+            toolResults.Content = JsonSerializer.Serialize(toolResponses);
+            toolResults.ResponseReceivedAt = DateTimeOffset.UtcNow;
+            await messageService.UpdateAsync(toolResults.Id, toolResults);
 
-            Message toolsResponseMessage = new Message()
-            {
-                ConversationId = conversation.Id,
-                UserId = null,
-                ModelId = message.ModelId,
-                UserPrompt = null,
-                SystemPrompt = "Here are the responses from the tools you requested. Please continue with the users request, or request more tool usage.",
-                ModelThought = null,
-                ModelResponse = null,
-                ResponseReceivedAt = DateTimeOffset.UtcNow,
-                ToolResponses = null
-            };
-
-            toolsResponseMessage = await messageService.AddAsync(toolsResponseMessage);
-            conversation.Messages.Add(toolsResponseMessage);
+            conversation.Messages.Add(toolResults);
 
             ProviderChatResponse responseToToolsResults = await llmProviderService.SendConversationToModelWithToolsAsync(message.ModelId, conversation, tools.Select(t => t.GetToolDefinition()));
 
-            Message currentMessage = await SaveResponseData(toolsResponseMessage, responseToToolsResults);
+            IEnumerable<Message> newMessages = await SaveResponseData(toolResults, responseToToolsResults);
 
             if(responseToToolsResults.tool_calls is not null)
-                await HandleModelResponse(conversation, currentMessage, responseToToolsResults);
+                await HandleModelResponse(conversation, newMessages.Last(), responseToToolsResults);
         }
 
         return message;
