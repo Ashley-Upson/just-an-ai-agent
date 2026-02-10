@@ -7,9 +7,9 @@ using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
 
-class OllamaClient
+public class OllamaClient
 {
-    private string ApiUrl {  get; set; }
+    private string ApiUrl { get; set; }
 
     private int Port { get; set; }
 
@@ -177,7 +177,7 @@ class OllamaClient
     {
         List<OllamaMessage> results = new();
 
-        if(message.Type != "tool-results")
+        if (message.Type != "tool-results")
             return results;
 
         var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Content);
