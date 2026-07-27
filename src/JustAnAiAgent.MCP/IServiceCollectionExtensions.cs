@@ -1,5 +1,6 @@
 ﻿using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.Tools.DirectoryServices;
+using JustAnAiAgent.MCP.Tools.PowerShell;
 using JustAnAiAgent.MCP.Tools.Web.Browsing;
 using JustAnAiAgent.MCP.Tools.Web.Search;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ public static class IServiceCollectionExtensions
     public static void AddMcpTools(this IServiceCollection services)
     {
         services.AddTransient<IMcpTool, GetDirectoryTree>();
+        services.AddTransient<IMcpTool, RunPowerShellCommand>();
         services.AddTransient<IMcpTool, DuckDuckGoSearch>();
         services.AddTransient<IMcpTool, GetWebContentFromUrl>();
         services.AddTransient<IMcpTool, ExtractTextContentFromDom>();
