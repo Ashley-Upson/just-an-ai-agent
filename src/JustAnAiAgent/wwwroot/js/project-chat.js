@@ -12,10 +12,19 @@ var sendModeMenu = document.getElementById('send-mode-menu');
 var sendMessageButton = document.getElementById('send-message-button');
 var loadMoreConversationsButton = document.getElementById('load-more-conversations');
 var loadMoreProjectsButton = document.getElementById('load-more-projects');
+var projectTasksList = document.getElementById('project-tasks-list');
+var loadMoreProjectTasksButton = document.getElementById('load-more-project-tasks');
+var projectLeftSidebar = document.getElementById('project-left-sidebar');
+var projectEmptyState = document.getElementById('project-empty-state');
+var projectMessageInputBox = document.getElementById('project-message-input-box');
+var messageSendInfoBox = document.getElementById('message-send-info-box');
 
 var newConversationName = document.getElementById('new-conversation-name');
 var newConversationDescription = document.getElementById('new-conversation-description');
 var newConversationAddButton = document.getElementById('create-conversation');
+var newProjectName = document.getElementById('new-project-name');
+var newProjectDescription = document.getElementById('new-project-description');
+var newProjectAddButton = document.getElementById('create-project');
 
 var pageSize = 25;
 var activeConversation = null;
@@ -25,8 +34,10 @@ var selectedModelId = null;
 var selectedMode = { type: 'chat' };
 var conversationsSkip = 0;
 var projectsSkip = 0;
+var projectTasksSkip = 0;
 var hasMoreConversations = false;
 var hasMoreProjects = false;
+var hasMoreProjectTasks = false;
 var loadedProjects = [];
 var activeMessagesODataUrl = null;
 var messageLimit = pageSize;
@@ -34,6 +45,12 @@ var renderedMessages = new Map();
 var renderedMessageOrder = [];
 
 async function loadConversations(reset = true) {
+    if (!activeProject) {
+        conversationsList.innerHTML = '';
+        loadMoreConversationsButton.classList.add('d-none');
+        return [];
+    }
+
     setCurrentAction('Loading conversations...');
 
     if (reset) {
@@ -41,7 +58,7 @@ async function loadConversations(reset = true) {
         conversationsList.innerHTML = '';
     }
 
-    var response = await api.get(`Conversation?$orderBy=LastmessageSentAt desc&$skip=${conversationsSkip}&$top=${pageSize + 1}`);
+    var response = await api.get(`Conversation?$filter=ProjectId eq ${activeProject.Id}&$orderBy=LastmessageSentAt desc&$skip=${conversationsSkip}&$top=${pageSize + 1}`);
     var conversations = getODataItems(response);
     hasMoreConversations = conversations.length > pageSize;
     conversations = conversations.slice(0, pageSize);
@@ -53,6 +70,34 @@ async function loadConversations(reset = true) {
     setCurrentActionIdle();
 
     return conversations;
+}
+
+async function loadProjectTasks(reset = true) {
+    if (!activeProject) {
+        projectTasksList.innerHTML = '';
+        loadMoreProjectTasksButton.classList.add('d-none');
+        return [];
+    }
+
+    setCurrentAction('Loading project tasks...');
+
+    if (reset) {
+        projectTasksSkip = 0;
+        projectTasksList.innerHTML = '';
+    }
+
+    var response = await api.get(`ProjectTask?$filter=ProjectId eq ${activeProject.Id}&$orderBy=Order asc,CreatedAt desc&$skip=${projectTasksSkip}&$top=${pageSize + 1}`);
+    var tasks = getODataItems(response);
+    hasMoreProjectTasks = tasks.length > pageSize;
+    tasks = tasks.slice(0, pageSize);
+    projectTasksSkip += tasks.length;
+
+    projectTasksList.append(...tasks.map(renderProjectTaskListItem));
+    loadMoreProjectTasksButton.classList.toggle('d-none', !hasMoreProjectTasks);
+
+    setCurrentActionIdle();
+
+    return tasks;
 }
 
 async function loadProjects(reset = true) {
@@ -107,7 +152,9 @@ async function loadProject(id) {
     setCurrentAction('Loading project...');
 
     activeProject = await api.get(`AgenticProject/${id}`);
-    activeProjectConversations = getODataItems(await api.get(`Conversation?$filter=ProjectId eq ${id}&$orderBy=LastmessageSentAt desc&$top=${pageSize}`));
+    showProjectWorkspace();
+    activeProjectConversations = await loadConversations();
+    await loadProjectTasks();
 
     if (activeProjectConversations.length == 0) {
         activeConversation = null;
@@ -132,6 +179,22 @@ async function loadProject(id) {
     setSendMode({ type: 'project-agent', project: activeProject, conversation: activeConversation });
 
     setCurrentActionIdle();
+}
+
+function showProjectWorkspace() {
+    projectLeftSidebar.classList.remove('d-none');
+    projectEmptyState.classList.add('d-none');
+    messagesBox.classList.remove('d-none');
+    projectMessageInputBox.classList.remove('d-none');
+    messageSendInfoBox.classList.remove('d-none');
+}
+
+function showProjectEmptyState() {
+    projectLeftSidebar.classList.add('d-none');
+    projectEmptyState.classList.remove('d-none');
+    messagesBox.classList.add('d-none');
+    projectMessageInputBox.classList.add('d-none');
+    messageSendInfoBox.classList.add('d-none');
 }
 
 function setActiveMessagesSource(odataUrl) {
@@ -217,6 +280,18 @@ function renderProjectListItem(project) {
     deleteButton.innerText = 'X';
 
     listItem.append(link, deleteButton);
+
+    return listItem;
+}
+
+function renderProjectTaskListItem(task) {
+    var listItem = makeElementWithClasses('li', ['list-group-item']);
+    var title = task.Title ?? 'Untitled task';
+
+    if (task.CompletedAt)
+        title = `${title} (done)`;
+
+    listItem.innerText = title;
 
     return listItem;
 }
@@ -312,6 +387,9 @@ async function sendMessage() {
 }
 
 async function getTargetConversationForSelectedMode() {
+    if (activeProject && !activeConversation)
+        return await createProjectConversation(activeProject);
+
     if (selectedMode.type == 'chat')
         return activeConversation;
 
@@ -326,22 +404,18 @@ async function getTargetConversationForSelectedMode() {
             return null;
         }
 
-        var conversation = await api.post('Conversation', {
-            Name: `${project.Name} agent`,
-            Description: `Project agent conversation for ${project.Name}`,
-            ProjectId: project.Id
-        });
-
-        activeProjectConversations.unshift(conversation);
-        setSendMode({ type: 'project-agent', project, conversation });
-
-        return conversation;
+        return await createProjectConversation(project);
     }
 
     return activeConversation;
 }
 
 function refreshSendModeOptions() {
+    if (!sendModeMenu) {
+        updateSelectedSendModeText();
+        return;
+    }
+
     sendModeMenu.innerHTML = '';
     sendModeMenu.appendChild(makeSendModeMenuItem('Send to chat', { type: 'chat' }));
 
@@ -363,6 +437,22 @@ function refreshSendModeOptions() {
     }));
 
     updateSelectedSendModeText();
+}
+
+async function createProjectConversation(project) {
+    var conversation = await api.post('Conversation', {
+        Name: `${project.Name} agent`,
+        Description: `Project agent conversation for ${project.Name}`,
+        ProjectId: project.Id
+    });
+
+    activeConversation = conversation;
+    activeProjectConversations.unshift(conversation);
+    setActiveMessagesSource(`Message?$filter=Conversation/ProjectId eq ${project.Id}&$orderby=CreatedAt desc`);
+    setSendMode({ type: 'project-agent', project, conversation });
+    await loadConversations();
+
+    return conversation;
 }
 
 function makeSendModeMenuItem(label, mode) {
@@ -798,6 +888,11 @@ function getODataItems(response) {
 }
 
 async function handleCreateConversationEvent() {
+    if (!activeProject) {
+        window.alert('Select a project before creating a conversation.');
+        return;
+    }
+
     var name = newConversationName.value;
     var description = newConversationDescription.value;
 
@@ -808,7 +903,8 @@ async function handleCreateConversationEvent() {
 
     var conversation = await api.post('Conversation', {
         Name: name,
-        Description: description
+        Description: description,
+        ProjectId: activeProject.Id
     });
 
     newConversationName.value = null;
@@ -823,12 +919,11 @@ async function handleCreateConversationEvent() {
 
 async function handleDeleteConversationEvent(id) {
     await api.delete(`Conversation/${id}`);
-    await loadConversations();
+    activeProjectConversations = await loadConversations();
 
     if (activeConversation?.Id == id) {
-        activeConversation = null;
-        clearMessages();
-        chatTitle.innerText = 'JustAnAiAgent';
+        activeConversation = activeProjectConversations[0] ?? null;
+        await loadMessagesFromActiveSource();
     }
 }
 
@@ -845,8 +940,42 @@ async function handleDeleteProjectEvent(id) {
         clearMessages();
         refreshSendModeOptions();
         setSendMode({ type: 'chat' });
-        chatTitle.innerText = 'JustAnAiAgent';
+        chatTitle.innerText = 'JustAnAiAgent | Projects';
+        showProjectEmptyState();
     }
+}
+
+async function handleCreateProjectEvent() {
+    var name = newProjectName.value;
+    var description = newProjectDescription.value;
+
+    if (!name) {
+        window.alert('Project name is required.');
+        return;
+    }
+
+    var conversation = await api.post('Conversation', {
+        Name: name,
+        Description: description
+    });
+
+    var project = await api.post('AgenticProject', {
+        Name: name,
+        Description: description,
+        ConversationId: conversation.Id
+    });
+
+    conversation.ProjectId = project.Id;
+    await api.put(`Conversation/${conversation.Id}`, conversation);
+
+    newProjectName.value = null;
+    newProjectDescription.value = null;
+
+    var modal = bootstrap.Modal.getInstance(document.getElementById('new-project-modal'));
+    modal.hide();
+
+    await loadProjects();
+    await loadProject(project.Id);
 }
 
 function initEventListeners() {
@@ -898,18 +1027,16 @@ function initEventListeners() {
 
     loadMoreConversationsButton.addEventListener('click', () => loadConversations(false));
     loadMoreProjectsButton?.addEventListener('click', () => loadProjects(false));
+    loadMoreProjectTasksButton.addEventListener('click', () => loadProjectTasks(false));
     newConversationAddButton.addEventListener('click', handleCreateConversationEvent);
+    newProjectAddButton.addEventListener('click', handleCreateProjectEvent);
 }
 
 async function start() {
-    var conversations = await loadConversations();
+    showProjectEmptyState();
     await loadProjects();
     await loadModels();
-
-    if (conversations.length > 0)
-        await loadConversation(conversations[0].Id);
-    else
-        refreshSendModeOptions();
+    refreshSendModeOptions();
 
     initEventListeners();
 }

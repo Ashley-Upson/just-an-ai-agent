@@ -19,6 +19,19 @@
     background: var(--bs-body-bg);
 }
 
+.scrolling-list-half {
+    max-height: 34vh;
+}
+
+.project-empty-state {
+    min-height: 58vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-secondary-color);
+    text-align: center;
+}
+
 .project,
 .conversation {
     cursor: pointer;

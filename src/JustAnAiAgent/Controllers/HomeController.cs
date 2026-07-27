@@ -21,4 +21,15 @@ public class HomeController(
 
         return View();
     }
+
+    [HttpGet("Projects")]
+    public IActionResult Projects()
+    {
+        ISSOAuthInfo user = authInfoOrchestrationService.GetSSOAuthInfo();
+
+        if (user.SSOUserId == "Guest")
+            return Redirect("Account/Login");
+
+        return View();
+    }
 }
