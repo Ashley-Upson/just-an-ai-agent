@@ -56,23 +56,39 @@ async function loadConversations(reset = true) {
 }
 
 async function loadProjects(reset = true) {
+    if (!projectsList)
+        return [];
+
     setCurrentAction('Loading projects...');
 
     if (reset) {
         projectsSkip = 0;
-        if (projectsList)
-            projectsList.innerHTML = '';
+        projectsList.innerHTML = '';
         loadedProjects = [];
     }
 
-    var response = await api.get(`AgenticProject?$orderBy=UpdatedAt desc,CreatedAt desc&$skip=${projectsSkip}&$top=${pageSize + 1}`);
+    if (!activeConversation) {
+        renderNoConnectedProjects();
+        loadMoreProjectsButton?.classList.add('d-none');
+        setCurrentActionIdle();
+        return [];
+    }
+
+    var filter = `ConversationId eq ${activeConversation.Id}`;
+
+    if (activeConversation.ProjectId)
+        filter = `${filter} or Id eq ${activeConversation.ProjectId}`;
+
+    var response = await api.get(`AgenticProject?$filter=${filter}&$orderBy=UpdatedAt desc,CreatedAt desc&$skip=${projectsSkip}&$top=${pageSize + 1}`);
     var projects = getODataItems(response);
     hasMoreProjects = projects.length > pageSize;
     projects = projects.slice(0, pageSize);
     projectsSkip += projects.length;
     loadedProjects.push(...projects);
 
-    if (projectsList)
+    if (projects.length == 0 && reset)
+        renderNoConnectedProjects();
+    else
         projectsList.append(...projects.map(renderProjectListItem));
 
     if (loadMoreProjectsButton)
@@ -97,10 +113,17 @@ async function loadConversation(id) {
     await loadMessagesFromActiveSource();
 
     await setModelFromLastMessage(activeConversation.Id);
+    await loadProjects();
     refreshSendModeOptions();
     defaultSendModeForActiveConversation();
 
     setCurrentActionIdle();
+}
+
+function renderNoConnectedProjects() {
+    var item = makeElementWithClasses('li', ['list-group-item', 'text-secondary']);
+    item.innerText = 'No connected projects';
+    projectsList.appendChild(item);
 }
 
 async function loadProject(id) {
@@ -204,19 +227,10 @@ function renderConversationListItem(conversation) {
 }
 
 function renderProjectListItem(project) {
-    var listItem = makeElementWithClasses('li', ['list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'project']);
-
-    var link = makeElementWithClasses('div', ['ms-2', 'me-auto']);
-    link.setAttribute('data-action', 'load-project');
-    link.setAttribute('data-project-id', project.Id);
-    link.innerText = project.Name;
-
-    var deleteButton = makeElementWithClasses('button', ['badge', 'text-bg-danger']);
-    deleteButton.setAttribute('data-action', 'delete-project');
-    deleteButton.setAttribute('data-project-id', project.Id);
-    deleteButton.innerText = 'X';
-
-    listItem.append(link, deleteButton);
+    var listItem = makeElementWithClasses('li', ['list-group-item', 'project']);
+    listItem.setAttribute('data-action', 'open-project');
+    listItem.setAttribute('data-project-id', project.Id);
+    listItem.innerText = project.Name;
 
     return listItem;
 }
@@ -882,8 +896,8 @@ function initEventListeners() {
 
         var action = target.getAttribute('data-action');
 
-        if (action == 'load-project')
-            loadProject(target.getAttribute('data-project-id'));
+        if (action == 'open-project')
+            window.location.href = `/Projects?projectId=${target.getAttribute('data-project-id')}`;
 
         if (action == 'delete-project')
             handleDeleteProjectEvent(target.getAttribute('data-project-id'));
@@ -902,14 +916,19 @@ function initEventListeners() {
 }
 
 async function start() {
+    var query = new URLSearchParams(window.location.search);
+    var requestedConversationId = query.get('conversationId');
     var conversations = await loadConversations();
-    await loadProjects();
     await loadModels();
 
-    if (conversations.length > 0)
+    if (requestedConversationId)
+        await loadConversation(requestedConversationId);
+    else if (conversations.length > 0)
         await loadConversation(conversations[0].Id);
-    else
+    else {
+        await loadProjects();
         refreshSendModeOptions();
+    }
 
     initEventListeners();
 }

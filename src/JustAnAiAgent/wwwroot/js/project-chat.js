@@ -1033,10 +1033,17 @@ function initEventListeners() {
 }
 
 async function start() {
+    var query = new URLSearchParams(window.location.search);
+    var requestedProjectId = query.get('projectId');
+
     showProjectEmptyState();
     await loadProjects();
     await loadModels();
-    refreshSendModeOptions();
+
+    if (requestedProjectId)
+        await loadProject(requestedProjectId);
+    else
+        refreshSendModeOptions();
 
     initEventListeners();
 }

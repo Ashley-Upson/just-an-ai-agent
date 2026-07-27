@@ -22,6 +22,17 @@ public class HomeController(
         return View();
     }
 
+    [HttpGet("Chat")]
+    public IActionResult Chat()
+    {
+        ISSOAuthInfo user = authInfoOrchestrationService.GetSSOAuthInfo();
+
+        if (user.SSOUserId == "Guest")
+            return Redirect("Account/Login");
+
+        return View();
+    }
+
     [HttpGet("Projects")]
     public IActionResult Projects()
     {
