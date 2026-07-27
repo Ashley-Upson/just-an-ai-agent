@@ -25,6 +25,12 @@ var newConversationAddButton = document.getElementById('create-conversation');
 var newProjectName = document.getElementById('new-project-name');
 var newProjectDescription = document.getElementById('new-project-description');
 var newProjectAddButton = document.getElementById('create-project');
+var newProjectTaskTitle = document.getElementById('new-project-task-title');
+var newProjectTaskDescription = document.getElementById('new-project-task-description');
+var newProjectTaskContext = document.getElementById('new-project-task-context');
+var newProjectTaskOrderMode = document.getElementById('new-project-task-order-mode');
+var newProjectTaskOrderTarget = document.getElementById('new-project-task-order-target');
+var newProjectTaskAddButton = document.getElementById('create-project-task');
 
 var pageSize = 25;
 var activeConversation = null;
@@ -39,6 +45,7 @@ var hasMoreConversations = false;
 var hasMoreProjects = false;
 var hasMoreProjectTasks = false;
 var loadedProjects = [];
+var loadedProjectTasks = [];
 var activeMessagesODataUrl = null;
 var messageLimit = pageSize;
 var renderedMessages = new Map();
@@ -76,6 +83,8 @@ async function loadProjectTasks(reset = true) {
     if (!activeProject) {
         projectTasksList.innerHTML = '';
         loadMoreProjectTasksButton.classList.add('d-none');
+        loadedProjectTasks = [];
+        refreshProjectTaskOrderTargets();
         return [];
     }
 
@@ -84,6 +93,7 @@ async function loadProjectTasks(reset = true) {
     if (reset) {
         projectTasksSkip = 0;
         projectTasksList.innerHTML = '';
+        loadedProjectTasks = [];
     }
 
     var response = await api.get(`ProjectTask?$filter=ProjectId eq ${activeProject.Id}&$orderBy=Order asc,CreatedAt desc&$skip=${projectTasksSkip}&$top=${pageSize + 1}`);
@@ -91,8 +101,14 @@ async function loadProjectTasks(reset = true) {
     hasMoreProjectTasks = tasks.length > pageSize;
     tasks = tasks.slice(0, pageSize);
     projectTasksSkip += tasks.length;
+    loadedProjectTasks.push(...tasks);
 
-    projectTasksList.append(...tasks.map(renderProjectTaskListItem));
+    if (loadedProjectTasks.length == 0)
+        projectTasksList.appendChild(makeListItem('No project tasks', ['text-secondary']));
+    else
+        projectTasksList.append(...tasks.map(renderProjectTaskListItem));
+
+    refreshProjectTaskOrderTargets();
     loadMoreProjectTasksButton.classList.toggle('d-none', !hasMoreProjectTasks);
 
     setCurrentActionIdle();
@@ -285,15 +301,40 @@ function renderProjectListItem(project) {
 }
 
 function renderProjectTaskListItem(task) {
-    var listItem = makeElementWithClasses('li', ['list-group-item']);
+    var listItem = makeElementWithClasses('li', ['list-group-item', 'd-flex', 'justify-content-between', 'align-items-start']);
+    listItem.setAttribute('data-project-task-id', task.Id);
     var title = task.Title ?? 'Untitled task';
 
     if (task.CompletedAt)
         title = `${title} (done)`;
 
-    listItem.innerText = title;
+    var titleItem = makeElementWithClasses('div', ['me-2', 'project-task-title']);
+    titleItem.innerText = title;
+
+    var actions = makeElementWithClasses('div', ['btn-group', 'btn-group-sm', 'project-task-actions']);
+
+    if (!task.StartedAt && !task.CompletedAt)
+        actions.appendChild(makeProjectTaskActionButton('Start', 'start-project-task', task.Id, ['btn-outline-secondary']));
+
+    if (task.CompletedAt)
+        actions.appendChild(makeProjectTaskActionButton('Reopen', 'reopen-project-task', task.Id, ['btn-outline-secondary']));
+    else
+        actions.appendChild(makeProjectTaskActionButton('Done', 'complete-project-task', task.Id, ['btn-outline-success']));
+
+    actions.appendChild(makeProjectTaskActionButton('Delete', 'delete-project-task', task.Id, ['btn-outline-danger']));
+    listItem.append(titleItem, actions);
 
     return listItem;
+}
+
+function makeProjectTaskActionButton(label, action, taskId, classes) {
+    var button = makeElementWithClasses('button', ['btn', ...classes]);
+    button.setAttribute('type', 'button');
+    button.setAttribute('data-action', action);
+    button.setAttribute('data-project-task-id', taskId);
+    button.innerText = label;
+
+    return button;
 }
 
 async function loadModels() {
@@ -978,6 +1019,138 @@ async function handleCreateProjectEvent() {
     await loadProject(project.Id);
 }
 
+async function handleCreateProjectTaskEvent() {
+    if (!activeProject) {
+        window.alert('Select a project before creating a task.');
+        return;
+    }
+
+    var title = newProjectTaskTitle.value.trim();
+
+    if (!title) {
+        window.alert('Task title is required.');
+        return;
+    }
+
+    var newTask = {
+        ProjectId: activeProject.Id,
+        Order: calculateProjectTaskOrder(),
+        Title: title,
+        Description: newProjectTaskDescription.value ?? '',
+        AdditionalContext: newProjectTaskContext.value || null
+    };
+
+    var createdTask = await api.post('ProjectTask', newTask);
+    await normalizeProjectTaskOrder(createdTask);
+
+    newProjectTaskTitle.value = null;
+    newProjectTaskDescription.value = null;
+    newProjectTaskContext.value = null;
+    newProjectTaskOrderMode.value = 'end';
+
+    var modal = bootstrap.Modal.getInstance(document.getElementById('new-project-task-modal'));
+    modal.hide();
+
+    await loadProjectTasks();
+}
+
+function calculateProjectTaskOrder() {
+    if (loadedProjectTasks.length == 0)
+        return 1000;
+
+    var mode = newProjectTaskOrderMode.value;
+    var targetTask = loadedProjectTasks.find(task => task.Id == newProjectTaskOrderTarget.value);
+    var minOrder = Math.min(...loadedProjectTasks.map(task => task.Order ?? 0));
+    var maxOrder = Math.max(...loadedProjectTasks.map(task => task.Order ?? 0));
+
+    if (mode == 'beginning')
+        return minOrder - 1000;
+
+    if (mode == 'before' && targetTask)
+        return (targetTask.Order ?? 0) - 1;
+
+    if (mode == 'after' && targetTask)
+        return (targetTask.Order ?? 0) + 1;
+
+    return maxOrder + 1000;
+}
+
+async function normalizeProjectTaskOrder(createdTask) {
+    var orderedTasks = [...loadedProjectTasks, createdTask]
+        .sort((left, right) => (left.Order ?? 0) - (right.Order ?? 0) || (left.CreatedAt ?? '').localeCompare(right.CreatedAt ?? ''));
+
+    for (var index = 0; index < orderedTasks.length; index++) {
+        var task = orderedTasks[index];
+        var nextOrder = (index + 1) * 1000;
+
+        if (task.Order == nextOrder)
+            continue;
+
+        await api.put(`ProjectTask/${task.Id}`, {
+            Id: task.Id,
+            ProjectId: task.ProjectId,
+            ConversationId: task.ConversationId,
+            Order: nextOrder,
+            Title: task.Title,
+            Description: task.Description ?? '',
+            AdditionalContext: task.AdditionalContext,
+            CreatedAt: task.CreatedAt,
+            StartedAt: task.StartedAt,
+            CompletedAt: task.CompletedAt
+        });
+    }
+}
+
+async function handleDeleteProjectTaskEvent(id) {
+    await api.delete(`ProjectTask/${id}`);
+    await loadProjectTasks();
+}
+
+async function updateProjectTaskState(id, changes) {
+    var task = loadedProjectTasks.find(task => task.Id == id) ?? await api.get(`ProjectTask/${id}`);
+
+    await api.put(`ProjectTask/${id}`, {
+        Id: task.Id,
+        ProjectId: task.ProjectId,
+        ConversationId: task.ConversationId,
+        Order: task.Order,
+        Title: task.Title,
+        Description: task.Description ?? '',
+        AdditionalContext: task.AdditionalContext,
+        CreatedAt: task.CreatedAt,
+        StartedAt: task.StartedAt,
+        CompletedAt: task.CompletedAt,
+        ...changes
+    });
+
+    await loadProjectTasks();
+}
+
+function refreshProjectTaskOrderTargets() {
+    if (!newProjectTaskOrderTarget)
+        return;
+
+    newProjectTaskOrderTarget.innerHTML = '';
+
+    if (loadedProjectTasks.length == 0) {
+        var emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.innerText = 'No tasks loaded';
+        newProjectTaskOrderTarget.appendChild(emptyOption);
+        newProjectTaskOrderTarget.disabled = true;
+        return;
+    }
+
+    for (var task of loadedProjectTasks) {
+        var option = document.createElement('option');
+        option.value = task.Id;
+        option.innerText = task.Title ?? 'Untitled task';
+        newProjectTaskOrderTarget.appendChild(option);
+    }
+
+    newProjectTaskOrderTarget.disabled = false;
+}
+
 function initEventListeners() {
     sendMessageButton.addEventListener('click', sendMessage);
 
@@ -1018,6 +1191,34 @@ function initEventListeners() {
             handleDeleteProjectEvent(target.getAttribute('data-project-id'));
     });
 
+    projectTasksList.addEventListener('click', function (e) {
+        var target = e.target.closest('[data-action]');
+
+        if (!target)
+            return;
+
+        var taskId = target.getAttribute('data-project-task-id');
+        var action = target.getAttribute('data-action');
+
+        if (action == 'start-project-task')
+            updateProjectTaskState(taskId, { StartedAt: new Date().toISOString() });
+
+        if (action == 'complete-project-task')
+            updateProjectTaskState(taskId, {
+                StartedAt: new Date().toISOString(),
+                CompletedAt: new Date().toISOString()
+            });
+
+        if (action == 'reopen-project-task')
+            updateProjectTaskState(taskId, {
+                StartedAt: null,
+                CompletedAt: null
+            });
+
+        if (action == 'delete-project-task')
+            handleDeleteProjectTaskEvent(taskId);
+    });
+
     messagesBox.addEventListener('click', function (e) {
         var target = e.target.closest('[data-action="load-more-messages"]');
 
@@ -1030,6 +1231,7 @@ function initEventListeners() {
     loadMoreProjectTasksButton.addEventListener('click', () => loadProjectTasks(false));
     newConversationAddButton.addEventListener('click', handleCreateConversationEvent);
     newProjectAddButton.addEventListener('click', handleCreateProjectEvent);
+    newProjectTaskAddButton.addEventListener('click', handleCreateProjectTaskEvent);
 }
 
 async function start() {

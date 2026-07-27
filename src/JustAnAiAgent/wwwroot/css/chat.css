@@ -20,7 +20,22 @@
 }
 
 .scrolling-list-half {
-    max-height: 34vh;
+    height: calc(45vh - 4.75rem);
+    max-height: calc(45vh - 4.75rem);
+}
+
+.project-sidebar-half {
+    height: 45vh;
+    min-height: 45vh;
+}
+
+.project-task-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.project-task-actions {
+    flex-shrink: 0;
 }
 
 .project-empty-state {
