@@ -107,8 +107,7 @@ public class OllamaClient
         ollamaRequest.options = new()
         {
             { "num_ctx", 20000 },
-            { "num_thread", 20 },
-            { "num_gpu", 16 }
+            { "num_thread", 20 }
         };
         List<OllamaMessage> messages = new();
 
@@ -124,6 +123,11 @@ public class OllamaClient
     {
         OllamaRequest ollamaRequest = new();
         ollamaRequest.stream = stream;
+        ollamaRequest.options = new()
+        {
+            { "num_ctx", 65565 },
+            { "num_thread", 20 }
+        };
         List<OllamaMessage> messages = new();
 
         foreach (var message in request.messages)
