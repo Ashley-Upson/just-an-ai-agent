@@ -109,6 +109,7 @@ async function loadProject(id) {
         activeConversation = null;
         messageLimit = pageSize;
         chatTitle.innerText = `JustAnAiAgent | ${activeProject.Name}`;
+        setActiveMessagesSource(null);
         clearMessages();
         refreshSendModeOptions();
         setSendMode({ type: 'new-project-agent', project: activeProject });
@@ -119,7 +120,7 @@ async function loadProject(id) {
     activeConversation = activeProjectConversations[0];
     messageLimit = pageSize;
     chatTitle.innerText = `JustAnAiAgent | ${activeProject.Name}`;
-    setActiveMessagesSource(`Message?$filter=ConversationId eq ${activeConversation.Id}&$orderby=CreatedAt desc`);
+    setActiveMessagesSource(`Message?$filter=Conversation/ProjectId eq ${activeProject.Id}&$orderby=CreatedAt desc`);
     await loadMessagesFromActiveSource();
 
     await setModelFromLastMessage(activeConversation.Id);
@@ -199,10 +200,19 @@ function renderConversationListItem(conversation) {
 }
 
 function renderProjectListItem(project) {
-    var listItem = makeElementWithClasses('li', ['list-group-item', 'project']);
-    listItem.setAttribute('data-action', 'load-project');
-    listItem.setAttribute('data-project-id', project.Id);
-    listItem.innerText = project.Name;
+    var listItem = makeElementWithClasses('li', ['list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'project']);
+
+    var link = makeElementWithClasses('div', ['ms-2', 'me-auto']);
+    link.setAttribute('data-action', 'load-project');
+    link.setAttribute('data-project-id', project.Id);
+    link.innerText = project.Name;
+
+    var deleteButton = makeElementWithClasses('button', ['badge', 'text-bg-danger']);
+    deleteButton.setAttribute('data-action', 'delete-project');
+    deleteButton.setAttribute('data-project-id', project.Id);
+    deleteButton.innerText = 'X';
+
+    listItem.append(link, deleteButton);
 
     return listItem;
 }
@@ -818,6 +828,23 @@ async function handleDeleteConversationEvent(id) {
     }
 }
 
+async function handleDeleteProjectEvent(id) {
+    await api.delete(`AgenticProject/${id}`);
+    await loadProjects();
+
+    activeProjectConversations = activeProjectConversations.filter(conversation => conversation.ProjectId != id);
+
+    if (activeProject?.Id == id) {
+        activeProject = null;
+        activeConversation = null;
+        setActiveMessagesSource(null);
+        clearMessages();
+        refreshSendModeOptions();
+        setSendMode({ type: 'chat' });
+        chatTitle.innerText = 'JustAnAiAgent';
+    }
+}
+
 function initEventListeners() {
     sendMessageButton.addEventListener('click', sendMessage);
 
@@ -844,10 +871,18 @@ function initEventListeners() {
     });
 
     projectsList.addEventListener('click', function (e) {
-        var target = e.target.closest('[data-action="load-project"]');
+        var target = e.target.closest('[data-action]');
 
-        if (target)
+        if (!target)
+            return;
+
+        var action = target.getAttribute('data-action');
+
+        if (action == 'load-project')
             loadProject(target.getAttribute('data-project-id'));
+
+        if (action == 'delete-project')
+            handleDeleteProjectEvent(target.getAttribute('data-project-id'));
     });
 
     messagesBox.addEventListener('click', function (e) {

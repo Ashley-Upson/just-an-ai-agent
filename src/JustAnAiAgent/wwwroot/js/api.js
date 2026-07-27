@@ -27,6 +27,9 @@
             throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
 
+        if (response.status == 204)
+            return null;
+
         return response.json();
     }
 
