@@ -349,12 +349,40 @@ public class OllamaOrchestrationService(
         return message;
     }
 
-    private IEnumerable<ToolParameterInput> ToolParameterInputsFromToolCallArguments(Dictionary<string, string> arguments) =>
+    private IEnumerable<ToolParameterInput> ToolParameterInputsFromToolCallArguments(Dictionary<string, JsonElement> arguments) =>
         arguments.Select(argument => new ToolParameterInput()
         {
             Name = argument.Key,
-            Value = argument.Value,
+            Value = GetToolParameterValue(argument.Value),
         });
+
+    private static object GetToolParameterValue(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => GetToolParameterNumberValue(value),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            JsonValueKind.Undefined => null,
+            _ => value.GetRawText()
+        };
+    }
+
+    private static object GetToolParameterNumberValue(JsonElement value)
+    {
+        if (value.TryGetInt32(out int intValue))
+            return intValue;
+
+        if (value.TryGetInt64(out long longValue))
+            return longValue;
+
+        if (value.TryGetDecimal(out decimal decimalValue))
+            return decimalValue;
+
+        return value.GetDouble();
+    }
 
     private async ValueTask<object> ExecuteToolCallAsync(OllamaToolCall call, ToolExecutionContext toolExecutionContext)
     {
