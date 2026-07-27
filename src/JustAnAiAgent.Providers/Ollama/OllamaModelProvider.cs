@@ -2,8 +2,9 @@
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
 using JustAnAiAgent.Providers.Interfaces;
-using JustAnAiAjent.Objects.Ollama;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
+
+using System.Runtime.CompilerServices;
 
 namespace JustAnAiAgent.Providers.Ollama;
 
@@ -44,6 +45,18 @@ public class OllamaModelProvider : IModelProvider
         return ProviderResponseFromOllamaResponse(response);
     }
 
+    public async IAsyncEnumerable<ProviderChatStreamChunk> SendConversationToModelWithToolsStreamAsync(
+        string model,
+        Conversation conversation,
+        IEnumerable<ToolDefinition> tools,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ProviderChatRequest request = new(model, conversation);
+
+        await foreach (OllamaResponse response in client.SendChatMessageWithToolsStreamAsync(request, tools, cancellationToken))
+            yield return ProviderStreamChunkFromOllamaResponse(response);
+    }
+
     private ProviderChatResponse ProviderResponseFromOllamaResponse(OllamaResponse response)
     {
         ProviderChatResponse providerResponse = new();
@@ -53,5 +66,17 @@ public class OllamaModelProvider : IModelProvider
         providerResponse.tool_calls = response.message.tool_calls;
 
         return providerResponse;
+    }
+
+    private ProviderChatStreamChunk ProviderStreamChunkFromOllamaResponse(OllamaResponse response)
+    {
+        return new ProviderChatStreamChunk
+        {
+            model = response.model,
+            message = response.message?.content,
+            thought = response.message?.thinking,
+            tool_calls = response.message?.tool_calls,
+            done = response.done
+        };
     }
 }

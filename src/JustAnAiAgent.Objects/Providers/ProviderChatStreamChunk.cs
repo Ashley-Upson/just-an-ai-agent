@@ -1,6 +1,6 @@
-﻿namespace JustAnAiAgent.Objects.Providers;
+namespace JustAnAiAgent.Objects.Providers;
 
-public class ProviderChatResponse
+public class ProviderChatStreamChunk
 {
     public string model { get; set; }
 
@@ -9,4 +9,6 @@ public class ProviderChatResponse
     public string message { get; set; }
 
     public dynamic tool_calls { get; set; }
+
+    public bool done { get; set; }
 }

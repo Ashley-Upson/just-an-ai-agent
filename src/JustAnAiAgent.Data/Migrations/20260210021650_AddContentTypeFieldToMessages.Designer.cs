@@ -4,6 +4,7 @@ using JustAnAiAgent.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JustAnAiAgent.Data.Migrations
 {
     [DbContext(typeof(JustAnAiAgentDbContext))]
-    partial class JustAnAiAgentDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260210021650_AddContentTypeFieldToMessages")]
+    partial class AddContentTypeFieldToMessages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -114,17 +117,26 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<bool>("IsComplete")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsStillRunning")
-                        .HasColumnType("bit");
-
                     b.Property<string>("ModelId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModelResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ModelThought")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("ResponseReceivedAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SystemPrompt")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ToolCalls")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ToolResponses")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -134,6 +146,9 @@ namespace JustAnAiAgent.Data.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserPrompt")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

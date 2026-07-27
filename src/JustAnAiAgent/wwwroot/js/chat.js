@@ -14,6 +14,7 @@ var newConversationAddButton = document.getElementById('create-conversation');
 
 var activeConversation = null;
 var selectedModelId = null;
+var renderedMessages = new Map();
 
 var conversationTemplate = `<div class="ms-2 me-auto conversation" onclick="loadConversation('{ID}')">{NAME}</div>
 <button class="badge text-bg-danger" name="delete-conversation" data-conversation-id="{ID}">X</button>`;
@@ -67,25 +68,34 @@ async function loadConversation(id) {
 
     chatTitle.innerText = `JustAnAiAgent | ${conversation.Name}`;
     messagesBox.innerHTML = '';
+    renderedMessages.clear();
 
     for (var message of conversation.Messages) {
-        addMessageToMessagesBox(message, 'user');
+        switch (message.Type) {
+            case 'user':
+                addMessageToMessagesBox(message, 'user');
+                break;
 
-        if (message.ModelThought)
-            addMessageToMessagesBox(message, 'model-thought');
+            case 'thought':
+                addMessageToMessagesBox(message, 'model-thought');
+                break;
 
-        if (message.ModelResponse)
-            addMessageToMessagesBox(message, 'model-response', message.ModelThought == null);
+            case 'response':
+                addMessageToMessagesBox(message, 'model-response');
+                break;
 
-        if (message.ToolCalls)
-            addMessageToMessagesBox(message, 'tool-calls');
+            case 'tool-calls':
+                addMessageToMessagesBox(message, 'tool-calls');
+                break;
 
-        if (message.ToolResponses)
-            addMessageToMessagesBox(message, 'tool-responses');
+            case 'tool-results':
+                addMessageToMessagesBox(message, 'tool-responses');
+                break;
+        }
     }
 
     if(conversation.Messages && conversation.Messages.length > 0)
-        setActiveModel(conversation.Messages[conversation.Messages.length - 1].ModelId);
+        setActiveModel(conversation.Messages[conversation.Messages.length - 1]?.ModelId);
 
     setCurrentActionIdle();
 
@@ -142,7 +152,7 @@ async function sendMessage(e) {
     var message = messageInput.value.trim();
 
     addMessageToMessagesBox({
-        UserPrompt: message,
+        Content: message,
         CreatedAt: new Date().toISOString(),
         ModelId: selectedModelId
     }, 'user');
@@ -152,31 +162,25 @@ async function sendMessage(e) {
     messageInput.disabled = true;
     sendMessageButton.disabled = true;
 
-    var response = await api.post(`Chat/ConversationWithNewMessage/${activeConversation.Id}`, {
-        ConversationId: activeConversation.Id,
-        UserPrompt: message,
-        ModelId: selectedModelId
-    });
+    try {
+        await api.postStream(`Chat/ConversationWithNewMessageStream/${activeConversation.Id}`, {
+            ConversationId: activeConversation.Id,
+            Content: message,
+            ModelId: selectedModelId,
+            Type: 'user',
+            ContentType: 'string'
+        }, upsertMessageToMessagesBox);
 
-    if (response.ModelThought)
-        addMessageToMessagesBox(response, 'model-thought');
-
-    if (response.ModelResponse)
-        addMessageToMessagesBox(response, 'model-response', response.ModelThought == null);
-
-    if (message.ToolCalls)
-        addMessageToMessagesBox(message, 'tool-calls');
-
-    if (message.ToolResponses)
-        addMessageToMessagesBox(message, 'tool-responses');
-
-    messageInput.disabled = false;
-    messageInput.value = '';
-    sendMessageButton.disabled = false;
-
-    setCurrentActionIdle();
-
-    loadConversations();
+        messageInput.value = '';
+        await loadConversations();
+    } catch (error) {
+        console.error(error);
+        window.alert(`Failed to send message: ${error.message}`);
+    } finally {
+        messageInput.disabled = false;
+        sendMessageButton.disabled = false;
+        setCurrentActionIdle();
+    }
 }
 
 function setActiveModel(id) {
@@ -187,20 +191,28 @@ function setActiveModel(id) {
 }
 
 function addMessageToMessagesBox(message, perspective, showStats = true) {
+    var renderedMessage = null;
+
+    if (!perspective)
+        return;
+
     if (perspective == 'user')
-        renderUserMessage(message);
+        renderedMessage = renderUserMessage(message);
 
     if (perspective == 'model-thought')
-        renderModelThought(message);
+        renderedMessage = renderModelThought(message);
 
     if (perspective == 'model-response')
-        renderModelResponse(message, showStats);
+        renderedMessage = renderModelResponse(message, showStats);
 
     if (perspective == 'tool-calls')
-        renderToolCalls(message);
+        renderedMessage = renderToolCalls(message);
 
     if (perspective == 'tool-responses')
-        renderToolResponses(message);
+        renderedMessage = renderToolResponses(message);
+
+    if (message.Id && renderedMessage)
+        renderedMessages.set(message.Id, renderedMessage);
 
     messagesBox.scrollTo({
         top: messagesBox.scrollHeight,
@@ -209,50 +221,119 @@ function addMessageToMessagesBox(message, perspective, showStats = true) {
     });
 }
 
+function upsertMessageToMessagesBox(message) {
+    var renderedMessage = renderedMessages.get(message.Id);
+
+    if (!renderedMessage) {
+        addMessageToMessagesBox(message, getPerspectiveForMessage(message));
+        return;
+    }
+
+    updateRenderedMessage(renderedMessage, message);
+
+    messagesBox.scrollTo({
+        top: messagesBox.scrollHeight,
+        left: 0,
+        behaviour: 'smooth'
+    });
+}
+
+function getPerspectiveForMessage(message) {
+    switch (message.Type) {
+        case 'user':
+            return 'user';
+
+        case 'thought':
+            return 'model-thought';
+
+        case 'response':
+            return 'model-response';
+
+        case 'tool-calls':
+            return 'tool-calls';
+
+        case 'tool-results':
+            return 'tool-responses';
+
+        default:
+            return null;
+    }
+}
+
+function updateRenderedMessage(renderedMessage, message) {
+    if (renderedMessage.receivedAtItem)
+        renderedMessage.receivedAtItem.innerText = formatDate(message.ResponseReceivedAt);
+
+    if (renderedMessage.statusItem)
+        renderedMessage.statusItem.innerText = getMessageStatus(message);
+
+    if (renderedMessage.contentItem)
+        setMessageContent(renderedMessage.contentItem, message, renderedMessage.html);
+}
+
 function renderUserMessage(message) {
     var statsItem = makeElementWithClasses('li', ['d-flex', 'justify-content-end'], [
         makeListGroup([
-            makeListItem(message.CreatedAt.replace('T', ' ').split('.')[0])
+            makeListItem(formatDate(message.CreatedAt))
         ], ['list-group-horizontal'])
     ]);
 
+    var contentItem = makeListItem(message.Content ?? '', ['list-group-item-info']);
     var messageItem = makeElementWithClasses('li', ['d-flex', 'justify-content-end'], [
         makeListGroup([
-            makeListItem(message.UserPrompt, ['list-group-item-info'])
+            contentItem
         ])
     ]);
 
     messagesBox.append(statsItem, messageItem);
+
+    return {
+        contentItem,
+        html: false
+    };
 }
 
 function renderModelThought(message) {
     var modelIdSplit = splitModelId(message.ModelId);
+    var receivedAtItem = makeListItem(formatDate(message.ResponseReceivedAt));
+    var statusItem = makeListItem(getMessageStatus(message));
     
     var statsItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(message.ResponseReceivedAt?.replace('T', ' ').split('.')[0]),
+            receivedAtItem,
             makeListItem(modelIdSplit.provider),
             makeListItem(modelIdSplit.model),
-            makeListItem('Thinking...')
+            statusItem
         ], ['list-group-horizontal'])
     ]);
 
+    var contentItem = makeListItem(message.Content ?? '', ['list-group-item-light']);
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(message.ModelThought, ['list-group-item-light'])
+            contentItem
         ])
     ]);
 
     messagesBox.append(statsItem, messageItem);
+
+    return {
+        receivedAtItem,
+        statusItem,
+        contentItem,
+        html: false
+    };
 }
 
 function renderModelResponse(message, renderStats = true) {
+    var receivedAtItem = null;
+
     if (renderStats) {
         var modelIdSplit = splitModelId(message.ModelId);
+        receivedAtItem = makeListItem(formatDate(message.ResponseReceivedAt));
 
         var statsItem = makeElementWithClasses('li', [], [
             makeListGroup([
-                makeListItem(message.ResponseReceivedAt?.replace('T', ' ').split('.')[0]),
+                receivedAtItem,
                 makeListItem(modelIdSplit.provider),
                 makeListItem(modelIdSplit.model)
             ], ['list-group-horizontal'])
@@ -261,13 +342,20 @@ function renderModelResponse(message, renderStats = true) {
         messagesBox.appendChild(statsItem);
     }
 
+    var contentItem = makeListItem(marked.parse(message.Content ?? ''), ['list-group-item-dark'], true);
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(marked.parse(message.ModelResponse), ['list-group-item-dark'], true)
+            contentItem
         ])
     ]);
 
     messagesBox.appendChild(messageItem);
+
+    return {
+        receivedAtItem,
+        contentItem,
+        html: true
+    };
 }
 
 function renderToolCalls(message) {
@@ -277,15 +365,19 @@ function renderToolCalls(message) {
         ], ['list-group-horizontal'])
     ]);
 
-    var toolCalls = JSON.stringify(JSON.parse(message.ToolCalls), null, 4);
-
+    var contentItem = makeListItem(getDisplayContent(message), ['list-group-item-primary'], true);
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(`<pre>${toolCalls}</pre>`, ['list-group-item-primary'], true)
+            contentItem
         ])
     ]);
 
     messagesBox.append(titleBar, messageItem);
+
+    return {
+        contentItem,
+        html: true
+    };
 }
 
 function renderToolResponses(message) {
@@ -295,20 +387,73 @@ function renderToolResponses(message) {
         ], ['list-group-horizontal'])
     ]);
 
-    var json = JSON.parse(message.ToolResponses);
-
-    for (var i in json)
-        json[i] = JSON.parse(json[i]);
-
-    var toolResponses = JSON.stringify(json, null, 4);
-
+    var contentItem = makeListItem(getDisplayContent(message), ['list-group-item-success'], true);
     var messageItem = makeElementWithClasses('li', [], [
         makeListGroup([
-            makeListItem(`<pre>${toolResponses.substring(0, 1000)}</pre>`, ['list-group-item-success'])
+            contentItem
         ])
     ]);
 
     messagesBox.append(titleBar, messageItem);
+
+    return {
+        contentItem,
+        html: true
+    };
+}
+
+function setMessageContent(contentItem, message, html) {
+    var content = getDisplayContent(message);
+
+    if (html)
+        contentItem.innerHTML = content;
+    else
+        contentItem.innerText = content;
+}
+
+function getDisplayContent(message) {
+    if (message.Type == 'response')
+        return marked.parse(message.Content ?? '');
+
+    if (message.Type == 'tool-calls')
+        return `<pre>${formatJson(message.Content)}</pre>`;
+
+    if (message.Type == 'tool-results')
+        return `<pre>${formatToolResponses(message.Content)}</pre>`;
+
+    return message.Content ?? '';
+}
+
+function formatToolResponses(content) {
+    var json = JSON.parse(content ?? '{}');
+
+    for (var i in json) {
+        try {
+            json[i] = JSON.parse(json[i]);
+        } catch {
+            json[i] = json[i];
+        }
+    }
+
+    return JSON.stringify(json, null, 4).substring(0, 1000);
+}
+
+function formatJson(content) {
+    return JSON.stringify(JSON.parse(content ?? '{}'), null, 4);
+}
+
+function getMessageStatus(message) {
+    if (message.IsStillRunning)
+        return 'Running...';
+
+    if (message.IsComplete)
+        return 'Complete';
+
+    return 'Pending';
+}
+
+function formatDate(value) {
+    return value?.replace('T', ' ').split('.')[0] ?? '';
 }
 
 function makeListGroup(listItems = [], classes = []) {
@@ -342,6 +487,14 @@ function setCurrentActionIdle() {
 }
 
 function splitModelId(id) {
+    if (id == null) {
+        return {
+            id: null,
+            provider: null,
+            model: null
+        };
+    }
+
     var indexOfGt = id.indexOf('>') + 1;
     var provider = id.substring(0, indexOfGt).replace('<', '').replace('>', '');
     var model = id.substring(indexOfGt);

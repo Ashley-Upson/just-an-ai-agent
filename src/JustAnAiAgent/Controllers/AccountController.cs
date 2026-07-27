@@ -23,8 +23,8 @@ public class AccountController(
         if (userId != "Guest")
             return Redirect("/");
 
-        ViewBag.Success = success;
-        ViewBag.Error = error;
+        ViewData["Success"] = success;
+        ViewData["Error"] = error;
 
         return View();
     }

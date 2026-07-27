@@ -1,16 +1,17 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Ollama;
-using JustAnAiAjent.Objects.Ollama;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Providers.Ollama;
 
-class OllamaClient
+public class OllamaClient
 {
-    private string ApiUrl {  get; set; }
+    private string ApiUrl { get; set; }
 
     private int Port { get; set; }
 
@@ -57,6 +58,48 @@ class OllamaClient
         return response;
     }
 
+    public async IAsyncEnumerable<OllamaResponse> SendChatMessageWithToolsStreamAsync(
+        ProviderChatRequest request,
+        IEnumerable<ToolDefinition> tools,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        OllamaRequest ollamaRequest = BuildChatRequestWithTools(request, tools, stream: true);
+        string payload = JsonSerializer.Serialize(ollamaRequest);
+
+        using HttpRequestMessage httpRequest = new(HttpMethod.Post, "chat")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+
+        using HttpResponseMessage httpResponse = await ApiClient.SendAsync(
+            httpRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        httpResponse.EnsureSuccessStatusCode();
+
+        await using Stream stream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
+        using StreamReader reader = new(stream);
+
+        JsonSerializerOptions options = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        {
+            string line = await reader.ReadLineAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            OllamaResponse chunk = JsonSerializer.Deserialize<OllamaResponse>(line, options);
+
+            if (chunk is not null)
+                yield return chunk;
+        }
+    }
+
     private OllamaRequest BuildBasicChatRequest(ProviderChatRequest request)
     {
         OllamaRequest ollamaRequest = new();
@@ -64,8 +107,7 @@ class OllamaClient
         ollamaRequest.options = new()
         {
             { "num_ctx", 20000 },
-            { "num_thread", 20 },
-            { "num_gpu", 16 }
+            { "num_thread", 20 }
         };
         List<OllamaMessage> messages = new();
 
@@ -77,10 +119,15 @@ class OllamaClient
         return ollamaRequest;
     }
 
-    private OllamaRequest BuildChatRequestWithTools(ProviderChatRequest request, IEnumerable<ToolDefinition> tools)
+    private OllamaRequest BuildChatRequestWithTools(ProviderChatRequest request, IEnumerable<ToolDefinition> tools, bool stream = false)
     {
         OllamaRequest ollamaRequest = new();
-        ollamaRequest.stream = false;
+        ollamaRequest.stream = stream;
+        ollamaRequest.options = new()
+        {
+            { "num_ctx", 65565 },
+            { "num_thread", 20 }
+        };
         List<OllamaMessage> messages = new();
 
         foreach (var message in request.messages)
@@ -95,46 +142,49 @@ class OllamaClient
     private IEnumerable<OllamaMessage> OllamaMessagesFromMessage(Message message)
     {
         List<OllamaMessage> messages = new();
-        
-        if(message.SystemPrompt is not null)
-        {
-            messages.Add(new()
-            {
-                role = "system",
-                content = message.SystemPrompt
-            });
-        }
 
-        if(message.UserPrompt is not null)
+        switch (message.Type)
         {
-            messages.Add(new()
-            {
-                role = "user",
-                content = message.UserPrompt
-            });
-        }
+            case "system":
+                messages.Add(new()
+                {
+                    role = "system",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ResponseReceivedAt is not null)
-        {
-            messages.Add(new()
-            {
-                role = "assistant",
-                content = message.ModelResponse
-            });
-        }
+            case "user":
+                messages.Add(new()
+                {
+                    role = "user",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ToolCalls is not null)
-        {
-            messages.Add(new()
-            {
-                role = "assistant",
-                content = "",
-                tool_calls = BuildToolCallsFromMessage(message)
-            });
-        }
+            case "response":
+                messages.Add(new()
+                {
+                    role = "assistant",
+                    content = message.Content
+                });
+                break;
 
-        if(message.ToolResponses is not null)
-            messages.AddRange(BuildToolResultsFromMessage(message));
+            case "tool-calls":
+                messages.Add(new()
+                {
+                    role = "assistant",
+                    content = "",
+                    tool_calls = BuildToolCallsFromMessage(message)
+                });
+                break;
+
+            case "tool-results":
+                messages.AddRange(BuildToolResultsFromMessage(message));
+                break;
+
+            default:
+                break;
+        }
 
         return messages;
     }
@@ -163,17 +213,22 @@ class OllamaClient
             }
         });
 
-    private IEnumerable<OllamaToolCall> BuildToolCallsFromMessage(Message message) =>
-        JsonSerializer.Deserialize<IEnumerable<OllamaToolCall>>(message.ToolCalls);
+    private IEnumerable<OllamaToolCall> BuildToolCallsFromMessage(Message message)
+    {
+        if (message.Type != "tool-calls")
+            return [];
+
+        return JsonSerializer.Deserialize<IEnumerable<OllamaToolCall>>(message.Content);
+    }
 
     private IEnumerable<OllamaMessage> BuildToolResultsFromMessage(Message message)
     {
         List<OllamaMessage> results = new();
 
-        if(message.ToolResponses is null)
+        if (message.Type != "tool-results")
             return results;
 
-        var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.ToolResponses);
+        var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Content);
 
         foreach (var item in responses)
         {

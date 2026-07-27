@@ -1,4 +1,6 @@
-﻿namespace JustAnAiAgent.Objects.Entities;
+﻿using System.Text.Json.Serialization;
+
+namespace JustAnAiAgent.Objects.Entities;
 
 public class Message
 {
@@ -8,19 +10,13 @@ public class Message
 
     public string? UserId { get; set; }
 
-    public string ModelId { get; set; }
+    public string Type { get; set; }
 
-    public string? UserPrompt { get; set; }
+    public string? ModelId { get; set; }
 
-    public string? SystemPrompt { get; set; }
+    public string Content { get; set; }
 
-    public string? ModelThought { get; set; }
-
-    public string? ModelResponse { get; set; }
-
-    public string? ToolCalls { get; set; }
-
-    public string? ToolResponses { get; set; }
+    public string ContentType { get; set; }
 
     public DateTimeOffset? ResponseReceivedAt { get; set; }
 
@@ -28,7 +24,13 @@ public class Message
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    public bool IsComplete { get; set; }
+
+    public bool IsStillRunning { get; set; }
+
+    [JsonIgnore]
     public virtual Conversation? Conversation { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<AgenticProject>? AgenticProjects { get; set; } 
 }

@@ -15,6 +15,7 @@ public class MessageService(IMessageBroker broker) : IMessageService
     public async ValueTask<Message> AddAsync(Message message)
     {
         message.CreatedAt = DateTimeOffset.UtcNow;
+        message.UpdatedAt = DateTimeOffset.UtcNow;
 
         return await broker.AddAsync(message);
     }

@@ -1,6 +1,6 @@
 ﻿using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
-using JustAnAiAjent.Objects.Providers;
+using JustAnAiAgent.Objects.Providers;
 
 namespace JustAnAiAgent.Services.Foundation.Interfaces;
 
@@ -11,4 +11,10 @@ public interface ILLMProviderService
     ValueTask<ProviderChatResponse> SendConversationToModelAsync(string model, Conversation conversation);
 
     ValueTask<ProviderChatResponse> SendConversationToModelWithToolsAsync(string model, Conversation conversation, IEnumerable<ToolDefinition> tools);
+
+    IAsyncEnumerable<ProviderChatStreamChunk> SendConversationToModelWithToolsStreamAsync(
+        string model,
+        Conversation conversation,
+        IEnumerable<ToolDefinition> tools,
+        CancellationToken cancellationToken = default);
 }
