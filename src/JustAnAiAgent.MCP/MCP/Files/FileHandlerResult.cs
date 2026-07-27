@@ -1,4 +1,4 @@
-namespace JustAnAiAgent.MCP.Tools.Files;
+namespace JustAnAiAgent.MCP.MCP.Files;
 
 public class FileHandlerResult
 {

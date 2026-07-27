@@ -3,7 +3,7 @@ using System.IO.Compression;
 using System.Text;
 using JustAnAiAgent.MCP.MCP;
 
-namespace JustAnAiAgent.MCP.Tools.Files;
+namespace JustAnAiAgent.MCP.MCP.Files;
 
 public class FileHandler
 {

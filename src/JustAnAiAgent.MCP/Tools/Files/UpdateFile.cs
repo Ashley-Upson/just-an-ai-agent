@@ -1,8 +1,9 @@
 using JustAnAiAgent.MCP.MCP;
+using JustAnAiAgent.MCP.MCP.Files;
 
 namespace JustAnAiAgent.MCP.Tools.Files;
 
-public class UpdateFileTool(FileHandler fileHandler) : FileToolBase(fileHandler)
+public class UpdateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 {
     public override string Name => "file-update";
 

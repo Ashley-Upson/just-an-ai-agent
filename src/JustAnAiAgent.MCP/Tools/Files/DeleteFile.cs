@@ -1,8 +1,9 @@
 using JustAnAiAgent.MCP.MCP;
+using JustAnAiAgent.MCP.MCP.Files;
 
 namespace JustAnAiAgent.MCP.Tools.Files;
 
-public class DeleteFileTool(FileHandler fileHandler) : FileToolBase(fileHandler)
+public class DeleteFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 {
     public override string Name => "file-delete";
 

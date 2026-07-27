@@ -1,8 +1,9 @@
 using JustAnAiAgent.MCP.MCP;
+using JustAnAiAgent.MCP.MCP.Files;
 
 namespace JustAnAiAgent.MCP.Tools.Files;
 
-public class MoveFileTool(FileHandler fileHandler) : FileToolBase(fileHandler)
+public class MoveFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 {
     public override string Name => "file-move";
 

@@ -3,7 +3,7 @@ using System.Text.Json;
 using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 
-namespace JustAnAiAgent.MCP.Tools.Files;
+namespace JustAnAiAgent.MCP.MCP.Files;
 
 public abstract class FileToolBase(FileHandler fileHandler) : IMcpTool
 {

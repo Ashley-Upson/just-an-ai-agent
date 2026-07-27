@@ -1,8 +1,9 @@
 using JustAnAiAgent.MCP.MCP;
+using JustAnAiAgent.MCP.MCP.Files;
 
 namespace JustAnAiAgent.MCP.Tools.Files;
 
-public class UnzipFileTool(FileHandler fileHandler) : FileToolBase(fileHandler)
+public class UnzipFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 {
     public override string Name => "file-unzip";
 
