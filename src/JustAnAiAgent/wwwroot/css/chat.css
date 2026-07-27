@@ -7,6 +7,23 @@
     overflow-y: scroll;
 }
 
+.scrolling-list-container {
+    max-height: 72vh;
+    overflow-y: auto;
+}
+
+.message-load-more {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bs-body-bg);
+}
+
+.project,
+.conversation {
+    cursor: pointer;
+}
+
 
 /*
 body {
