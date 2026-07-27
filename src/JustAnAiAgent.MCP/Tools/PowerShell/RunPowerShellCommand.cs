@@ -120,7 +120,6 @@ public partial class RunPowerShellCommand : IMcpTool
             await File.WriteAllTextAsync(scriptPath, command, Encoding.UTF8);
 
             PowerShellCommandResult result = await RunScriptAsync(
-                normalizedProjectPath,
                 workingDirectory,
                 scriptPath,
                 timeoutSeconds);
@@ -135,7 +134,6 @@ public partial class RunPowerShellCommand : IMcpTool
     }
 
     private static async ValueTask<PowerShellCommandResult> RunScriptAsync(
-        string projectPath,
         string workingDirectory,
         string scriptPath,
         int timeoutSeconds)
@@ -184,8 +182,6 @@ public partial class RunPowerShellCommand : IMcpTool
 
         return new()
         {
-            ProjectPath = projectPath,
-            WorkingDirectory = workingDirectory,
             ExitCode = timedOut ? null : process.ExitCode,
             TimedOut = timedOut,
             StandardOutput = standardOutput.ToString(),
