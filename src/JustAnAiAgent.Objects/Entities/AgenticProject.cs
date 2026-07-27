@@ -4,7 +4,9 @@ public class AgenticProject
 {
     public Guid Id { get; set; }
 
-    public Guid MessageId { get; set; }
+    public Guid? MessageId { get; set; }
+
+    public Guid ConversationId { get; set; }
 
     public string Name { get; set; }
 
@@ -19,6 +21,8 @@ public class AgenticProject
     public DateTimeOffset? UpdatedAt { get; set; }
 
     public virtual Message? Message { get; set; }
+
+    public virtual Conversation? Conversation { get; set; }
 
     public virtual ICollection<Conversation>? Conversations { get; set; }
 

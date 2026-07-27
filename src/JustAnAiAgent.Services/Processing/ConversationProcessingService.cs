@@ -43,7 +43,8 @@ public class ConversationProcessingService(
             .Where(m => m.ConversationId == id);
 
         IEnumerable<AgenticProject> projects = agenticProjectService.GetAll()
-            .Where(ap => messages.Select(m => m.Id).Contains(ap.MessageId));
+            .Where(ap => ap.ConversationId == id
+                || (ap.MessageId.HasValue && messages.Select(m => m.Id).Contains(ap.MessageId.Value)));
 
         IEnumerable<UserConversation> users = userConversationService.GetAll()
             .Where(uc => uc.ConversationId == id);

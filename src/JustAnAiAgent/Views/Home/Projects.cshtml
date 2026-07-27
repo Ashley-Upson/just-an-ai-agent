@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "Projects";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="css/chat.css">
+
+<div class="row">
+    <div class="col-md-2">
+        <div id="project-left-sidebar" class="d-none">
+            <div class="project-sidebar-half">
+                <h3>Project tasks</h3>
+                <div class="scrolling-list-container scrolling-list-half mt-1">
+                    <ul class="list-group" id="project-tasks-list"></ul>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-1 d-none" id="load-more-project-tasks">
+                    Load more
+                </button>
+            </div>
+
+            <div class="project-sidebar-half mt-3">
+                <h3>Conversations</h3>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#new-conversation-modal">
+                    New conversation
+                </button>
+                <div class="scrolling-list-container scrolling-list-half mt-1">
+                    <ul class="list-group" id="conversations-list"></ul>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-1 d-none" id="load-more-conversations">
+                    Load more
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <h1 id="title">JustAnAiAgent | Projects</h1>
+
+        <div class="project-empty-state" id="project-empty-state">
+            Please select a project from the sidebar, or create a new one, to get started.
+        </div>
+
+        <ul class="list-unstyled d-none" id="messages-box"></ul>
+
+        <div class="input-group input-group-sm d-none" id="project-message-input-box">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="model-select-button" data-bs-toggle="dropdown" aria-expanded="false">Select model</button>
+            <ul class="dropdown-menu" id="model-select"></ul>
+
+            <textarea class="form-control" rows="5" id="message-input" placeholder="Send a message..."></textarea>
+
+            <button type="button" class="btn btn-sm btn-success" id="send-message-button">
+                Send
+            </button>
+        </div>
+
+        <div class="input-group input-group-sm d-none" id="message-send-info-box">
+            <span class="input-group-text" id="selected-model">No model selected</span>
+            <input class="form-control disabled" disabled />
+            <span class="input-group-text text-end" id="current-action-span">Idle.</span>
+            <span class="input-group-text" id="selected-send-mode">Sending to project conversation</span>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <h3>Projects</h3>
+
+        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#new-project-modal">
+            New project
+        </button>
+
+        <div class="scrolling-list-container mt-1">
+            <ul class="list-group" id="projects-list"></ul>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-1 d-none" id="load-more-projects">
+            Load more
+        </button>
+    </div>
+</div>
+
+<div class="modal fade" id="new-conversation-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">New conversation</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="conversation-name-text">Name</span>
+                        <input type="text" class="form-control" name="Name" id="new-conversation-name" aria-describedby="conversation-name-text" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="conversation-description-text">Description</span>
+                        <input type="text" class="form-control" name="Description" id="new-conversation-description" aria-describedby="conversation-description-text" required />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="create-conversation">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="new-project-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">New project</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="project-name-text">Name</span>
+                        <input type="text" class="form-control" name="Name" id="new-project-name" aria-describedby="project-name-text" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="project-description-text">Description</span>
+                        <input type="text" class="form-control" name="Description" id="new-project-description" aria-describedby="project-description-text" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="create-project">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
+<script src="/js/project-chat.js"></script>

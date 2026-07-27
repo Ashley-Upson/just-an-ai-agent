@@ -10,6 +10,7 @@ using JustAnAiAgent.Objects.Providers;
 using JustAnAiAgent.Services.Foundation.Interfaces;
 using JustAnAiAgent.Services.Orchestration.Interfaces;
 using JustAnAiAgent.Services.Processing.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace JustAnAiAgent.Services.Orchestration;
 
@@ -17,8 +18,11 @@ public class OllamaOrchestrationService(
     IConversationProcessingService conversationService,
     IMessageService messageService,
     IEnumerable<IMcpTool> tools,
-    ILLMProviderService llmProviderService) : IOllamaOrchestrationService
+    ILLMProviderService llmProviderService,
+    IConfiguration configuration) : IOllamaOrchestrationService
 {
+    private const string ToolExecutionBasePathConfigurationKey = "ToolExecution:BasePath";
+
     public async ValueTask<Message> AddMessageAndSendToModel(Guid id, Message message)
     {
         Conversation conversation = await conversationService.GetWithMessagesAsync(id);
@@ -193,15 +197,11 @@ public class OllamaOrchestrationService(
             conversation.Messages.Add(toolCallsMessage);
             yield return SnapshotMessage(toolCallsMessage, toolCallsMessage.Content, true, false);
 
-            Dictionary<string, string> toolResponses = new();
+            Dictionary<string, object> toolResponses = new();
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             foreach (OllamaToolCall call in toolCallsFromStream)
-            {
-                IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
-
-                if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments)));
-            }
+                toolResponses.Add(call.function.name, await ExecuteToolCallAsync(call, toolExecutionContext));
 
             Message toolResultsMessage = await messageService.AddAsync(new()
             {
@@ -312,7 +312,8 @@ public class OllamaOrchestrationService(
     {
         if (response.tool_calls is not null)
         {
-            Dictionary<string, string> toolResponses = new Dictionary<string, string>();
+            Dictionary<string, object> toolResponses = new Dictionary<string, object>();
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             Message toolResults = await messageService.AddAsync(new()
             {
@@ -327,12 +328,7 @@ public class OllamaOrchestrationService(
             });
 
             foreach (var call in response.tool_calls)
-            {
-                var tool = tools.FirstOrDefault(t => t.Name == call.function.name);
-
-                if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments)));
-            }
+                toolResponses.Add(call.function.name, await ExecuteToolCallAsync(call, toolExecutionContext));
 
             toolResults.Content = JsonSerializer.Serialize(toolResponses);
             toolResults.ResponseReceivedAt = DateTimeOffset.UtcNow;
@@ -359,6 +355,62 @@ public class OllamaOrchestrationService(
             Name = argument.Key,
             Value = argument.Value,
         });
+
+    private async ValueTask<object> ExecuteToolCallAsync(OllamaToolCall call, ToolExecutionContext toolExecutionContext)
+    {
+        IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
+
+        if (tool is null)
+        {
+            return new
+            {
+                success = false,
+                message = $"The requested tool does not exist: {call.function.name}"
+            };
+        }
+
+        string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
+
+        if (TryParseJson(result, out JsonElement jsonResult))
+            return jsonResult;
+
+        return result;
+    }
+
+    private static bool TryParseJson(string value, out JsonElement json)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(value);
+            json = document.RootElement.Clone();
+            return true;
+        }
+        catch (JsonException)
+        {
+            json = default;
+            return false;
+        }
+    }
+
+    private static ToolExecutionContext BuildToolExecutionContext(
+        Conversation conversation,
+        IConfiguration configuration)
+    {
+        string basePath = configuration[ToolExecutionBasePathConfigurationKey];
+
+        if (string.IsNullOrWhiteSpace(basePath))
+            throw new InvalidOperationException($"Configuration value '{ToolExecutionBasePathConfigurationKey}' is required.");
+
+        string workspaceType = conversation.ProjectId.HasValue
+            ? "project"
+            : "conversation";
+        string workspaceId = (conversation.ProjectId ?? conversation.Id).ToString();
+
+        return new()
+        {
+            ProjectPath = Path.Combine(basePath, workspaceType, workspaceId)
+        };
+    }
 
     private static Message SnapshotMessage(Message message, string content, bool isComplete, bool isStillRunning)
     {

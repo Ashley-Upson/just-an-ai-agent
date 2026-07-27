@@ -11,4 +11,7 @@ public interface IMcpTool
     ToolDefinition GetToolDefinition();
 
     ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters);
+
+    ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context) =>
+        Execute(parameters);
 }

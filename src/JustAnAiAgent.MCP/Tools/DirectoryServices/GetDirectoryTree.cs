@@ -1,22 +1,33 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
+using JustAnAiAgent.MCP.MCP.Files;
 
 namespace JustAnAiAgent.MCP.Tools.DirectoryServices;
 
-public class GetDirectoryTree : IMcpTool
+public class GetDirectoryTree(FileHandler fileHandler) : IMcpTool
 {
     public string Name => "get-directory-tree";
 
-    private ToolParameters Parameters = new()
+    private readonly ToolParameters parameters = new()
     {
         Type = "object",
-        Properties = new List<ToolParameterProperty> {
-            new() {
+        Properties = new List<ToolParameterProperty>
+        {
+            new()
+            {
                 Name = "path",
                 Type = "string",
-                Description = "The root path for the tree being requested.",
+                Description = "Relative root path for the tree being requested.",
                 Required = true,
+            },
+            new()
+            {
+                Name = "filter",
+                Type = "array",
+                Description = "Optional folder names to exclude. Defaults to .vs, .git, bin, and obj.",
+                Required = false,
             }
         },
         Required = new List<string> { "path" },
@@ -27,75 +38,58 @@ public class GetDirectoryTree : IMcpTool
         return new()
         {
             Name = Name,
-            Description = "List all files recursively in a given directory",
+            Description = "List all files recursively in a directory under the current tool workspace.",
             Type = "function",
-            Parameters = Parameters,
-            Required = Parameters.Properties.Where(p => p.Required).Select(p => p.Name).ToArray()
+            Parameters = parameters,
+            Required = parameters.Properties.Where(p => p.Required).Select(p => p.Name).ToArray()
         };
     }
 
-    public List<string> FilteredFolders = new();
+    public ToolParameters GetParameters() =>
+        parameters;
 
     public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters)
     {
-        var pathParameter = parameters.Where(p => p.Name == "path").FirstOrDefault();
-        var filterParameter = parameters.Where(p => p.Name == "filter").FirstOrDefault();
-
-        if (pathParameter == null)
-            throw new ValidationException("Parameter 'path' not specified.");
-
-        if(filterParameter is null)
-            FilteredFolders.AddRange([
-                ".vs",
-                ".git",
-                "bin",
-                "obj"
-            ]);
-        else
-            if (filterParameter.Value is IEnumerable<object> values)
-                FilteredFolders.AddRange(values.Select(i => i?.ToString() ?? string.Empty).Where(i => i != null));
-            else
-                throw new ValidationException("Filter parameter value is not in the expected format.");
-
-        var path = pathParameter.Value.ToString();
-
-        IEnumerable<string> tree = GetDirectoryTreeFromPath(path);
-
-        return string.Join("\n", tree);
+        return await Execute(parameters, new ToolExecutionContext());
     }
 
-    public ToolParameters GetParameters() =>
-        Parameters;
-
-    private string[] GetDirectoryTreeFromPath(string path)
+    public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        DirectoryInfo directory = new DirectoryInfo(path);
+        Dictionary<string, object> values = parameters.ToDictionary(
+            parameter => parameter.Name,
+            parameter => parameter.Value,
+            StringComparer.OrdinalIgnoreCase);
+        FileHandlerResult result = await fileHandler.GetDirectoryTreeAsync(
+            context,
+            GetRequiredString(values, "path"),
+            GetOptionalFilter(values));
 
-        string parentPath = directory.Parent.FullName;
-
-        string[] tree = GetFilesAndFolders(path);
-
-        return tree.Select(i => i.Replace(parentPath, "")).ToArray();
+        return JsonSerializer.Serialize(result.Paths ?? []);
     }
 
-    private string[] GetFilesAndFolders(string path)
+    private static string GetRequiredString(Dictionary<string, object> values, string name)
     {
-        DirectoryInfo directory = new DirectoryInfo(path);
-        FileSystemInfo[] items = directory.GetFileSystemInfos();
-        List<string> tree = new();
+        string? value = values.TryGetValue(name, out object? rawValue)
+            ? rawValue?.ToString()
+            : null;
 
-        foreach (FileSystemInfo item in items)
-        {
-            if (item is DirectoryInfo && FilteredFolders.Contains(item.Name))
-                continue;
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ValidationException($"Parameter '{name}' is required.");
 
-            if(item is FileInfo)
-                tree.Add(item.FullName);
+        return value;
+    }
 
-            if (item is DirectoryInfo)
-                tree.AddRange(GetFilesAndFolders(item.FullName));
-        }
+    private static IEnumerable<string>? GetOptionalFilter(Dictionary<string, object> values)
+    {
+        if (!values.TryGetValue("filter", out object? filter))
+            return null;
 
-        return tree.ToArray();
+        if (filter is IEnumerable<object> filterValues)
+            return filterValues
+                .Select(value => value?.ToString())
+                .Where(value => !string.IsNullOrWhiteSpace(value))!;
+
+        return filter.ToString()?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }
