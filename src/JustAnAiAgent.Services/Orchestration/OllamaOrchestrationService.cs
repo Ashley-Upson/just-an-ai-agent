@@ -10,6 +10,7 @@ using JustAnAiAgent.Objects.Providers;
 using JustAnAiAgent.Services.Foundation.Interfaces;
 using JustAnAiAgent.Services.Orchestration.Interfaces;
 using JustAnAiAgent.Services.Processing.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace JustAnAiAgent.Services.Orchestration;
 
@@ -17,11 +18,10 @@ public class OllamaOrchestrationService(
     IConversationProcessingService conversationService,
     IMessageService messageService,
     IEnumerable<IMcpTool> tools,
-    ILLMProviderService llmProviderService) : IOllamaOrchestrationService
+    ILLMProviderService llmProviderService,
+    IConfiguration configuration) : IOllamaOrchestrationService
 {
-    private static readonly string ToolWorkspaceRoot = Path.Combine(
-        Environment.CurrentDirectory,
-        ".agent-workspaces");
+    private const string ToolExecutionBasePathConfigurationKey = "ToolExecution:BasePath";
 
     public async ValueTask<Message> AddMessageAndSendToModel(Guid id, Message message)
     {
@@ -198,7 +198,7 @@ public class OllamaOrchestrationService(
             yield return SnapshotMessage(toolCallsMessage, toolCallsMessage.Content, true, false);
 
             Dictionary<string, string> toolResponses = new();
-            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation);
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             foreach (OllamaToolCall call in toolCallsFromStream)
             {
@@ -318,7 +318,7 @@ public class OllamaOrchestrationService(
         if (response.tool_calls is not null)
         {
             Dictionary<string, string> toolResponses = new Dictionary<string, string>();
-            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation);
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             Message toolResults = await messageService.AddAsync(new()
             {
@@ -366,16 +366,23 @@ public class OllamaOrchestrationService(
             Value = argument.Value,
         });
 
-    private static ToolExecutionContext BuildToolExecutionContext(Conversation conversation)
+    private static ToolExecutionContext BuildToolExecutionContext(
+        Conversation conversation,
+        IConfiguration configuration)
     {
+        string basePath = configuration[ToolExecutionBasePathConfigurationKey];
+
+        if (string.IsNullOrWhiteSpace(basePath))
+            throw new InvalidOperationException($"Configuration value '{ToolExecutionBasePathConfigurationKey}' is required.");
+
         string workspaceType = conversation.ProjectId.HasValue
-            ? "projects"
-            : "conversations";
+            ? "project"
+            : "conversation";
         string workspaceId = (conversation.ProjectId ?? conversation.Id).ToString();
 
         return new()
         {
-            ProjectPath = Path.Combine(ToolWorkspaceRoot, workspaceType, workspaceId)
+            ProjectPath = Path.Combine(basePath, workspaceType, workspaceId)
         };
     }
 
