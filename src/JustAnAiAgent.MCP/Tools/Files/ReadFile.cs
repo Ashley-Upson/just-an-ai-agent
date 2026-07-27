@@ -21,9 +21,10 @@ public class ReadFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.ReadFileAsync(context, GetRequiredString(values, "path"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.ReadFileAsync(context, GetRequiredString(values, "path"));
+        });
     }
 }

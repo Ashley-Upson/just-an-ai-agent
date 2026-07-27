@@ -23,13 +23,14 @@ public class MoveFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.MoveAsync(
-            context,
-            GetRequiredString(values, "sourcePath"),
-            GetRequiredString(values, "destinationPath"),
-            GetOptionalBoolean(values, "overwrite"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.MoveAsync(
+                context,
+                GetRequiredString(values, "sourcePath"),
+                GetRequiredString(values, "destinationPath"),
+                GetOptionalBoolean(values, "overwrite"));
+        });
     }
 }

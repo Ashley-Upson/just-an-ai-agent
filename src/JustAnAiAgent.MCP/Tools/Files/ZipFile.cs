@@ -23,13 +23,14 @@ public class ZipFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.ZipAsync(
-            context,
-            GetRequiredString(values, "sourcePath"),
-            GetRequiredString(values, "zipPath"),
-            GetOptionalBoolean(values, "overwrite"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.ZipAsync(
+                context,
+                GetRequiredString(values, "sourcePath"),
+                GetRequiredString(values, "zipPath"),
+                GetOptionalBoolean(values, "overwrite"));
+        });
     }
 }

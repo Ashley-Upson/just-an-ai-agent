@@ -23,13 +23,14 @@ public class DownloadFileFromUrl(FileHandler fileHandler) : FileToolBase(fileHan
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.DownloadFileFromUrlAsync(
-            context,
-            GetRequiredString(values, "url"),
-            GetRequiredString(values, "path"),
-            GetOptionalBoolean(values, "overwrite"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.DownloadFileFromUrlAsync(
+                context,
+                GetRequiredString(values, "url"),
+                GetRequiredString(values, "path"),
+                GetOptionalBoolean(values, "overwrite"));
+        });
     }
 }

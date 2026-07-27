@@ -55,17 +55,43 @@ public class GetDirectoryTree(FileHandler fileHandler) : IMcpTool
 
     public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = parameters.ToDictionary(
-            parameter => parameter.Name,
-            parameter => parameter.Value,
-            StringComparer.OrdinalIgnoreCase);
-        FileHandlerResult result = await fileHandler.GetDirectoryTreeAsync(
-            context,
-            GetRequiredString(values, "path"),
-            GetOptionalFilter(values));
+        try
+        {
+            Dictionary<string, object> values = parameters.ToDictionary(
+                parameter => parameter.Name,
+                parameter => parameter.Value,
+                StringComparer.OrdinalIgnoreCase);
+            FileHandlerResult result = await fileHandler.GetDirectoryTreeAsync(
+                context,
+                GetRequiredString(values, "path"),
+                GetOptionalFilter(values));
 
-        return JsonSerializer.Serialize(result.Paths ?? []);
+            return JsonSerializer.Serialize(result.Paths ?? []);
+        }
+        catch (ValidationException exception)
+        {
+            return SerializeFailure(exception.Message);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return SerializeFailure($"Directory tree read failed because access was denied: {exception.Message}");
+        }
+        catch (IOException exception)
+        {
+            return SerializeFailure($"Directory tree read failed because of an IO error: {exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            return SerializeFailure($"Directory tree read failed: {exception.Message}");
+        }
     }
+
+    private static string SerializeFailure(string message) =>
+        JsonSerializer.Serialize(new FileHandlerResult
+        {
+            Success = false,
+            Message = message
+        });
 
     private static string GetRequiredString(Dictionary<string, object> values, string name)
     {

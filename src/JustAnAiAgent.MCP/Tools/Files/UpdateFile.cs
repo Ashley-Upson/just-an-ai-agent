@@ -26,16 +26,17 @@ public class UpdateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.UpdateFileAsync(
-            context,
-            GetRequiredString(values, "path"),
-            GetRequiredString(values, "content"),
-            FileUpdateModeParser.Parse(GetOptionalString(values, "mode")),
-            GetOptionalBoolean(values, "createIfMissing"),
-            GetOptionalInteger(values, "startLine"),
-            GetOptionalInteger(values, "endLine"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.UpdateFileAsync(
+                context,
+                GetRequiredString(values, "path"),
+                GetRequiredString(values, "content"),
+                FileUpdateModeParser.Parse(GetOptionalString(values, "mode")),
+                GetOptionalBoolean(values, "createIfMissing"),
+                GetOptionalInteger(values, "startLine"),
+                GetOptionalInteger(values, "endLine"));
+        });
     }
 }

@@ -176,7 +176,11 @@ public class FileHandler
             });
         }
 
-        throw new ValidationException("The requested file or directory does not exist.");
+        return Completed(new()
+        {
+            Success = false,
+            Message = "Nothing to delete at given path."
+        });
     }
 
     public ValueTask<FileHandlerResult> RenameAsync(ToolExecutionContext context, string path, string newName, bool overwrite = false)
