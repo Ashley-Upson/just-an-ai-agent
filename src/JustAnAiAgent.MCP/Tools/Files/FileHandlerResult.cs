@@ -1,0 +1,10 @@
+namespace JustAnAiAgent.MCP.Tools.Files;
+
+public class FileHandlerResult
+{
+    public bool Success { get; set; } = true;
+
+    public string? Content { get; set; }
+
+    public string? Message { get; set; }
+}
