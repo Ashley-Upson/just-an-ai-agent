@@ -70,6 +70,15 @@ public abstract class FileToolBase(FileHandler fileHandler) : IMcpTool
             : defaultValue;
     }
 
+    protected static int? GetOptionalInteger(Dictionary<string, object> parameters, string name)
+    {
+        string? value = GetOptionalString(parameters, name);
+
+        return int.TryParse(value, out int result)
+            ? result
+            : null;
+    }
+
     protected static ToolParameterProperty Parameter(string name, string type, string description, bool required) =>
         new()
         {

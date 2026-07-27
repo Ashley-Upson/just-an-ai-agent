@@ -8,6 +8,13 @@ namespace JustAnAiAgent.MCP.MCP.Files;
 public class FileHandler
 {
     private static readonly HttpClient HttpClient = new();
+    private static readonly string[] DefaultFilteredFolders =
+    [
+        ".vs",
+        ".git",
+        "bin",
+        "obj"
+    ];
 
     public async ValueTask<FileHandlerResult> CreateFileAsync(ToolExecutionContext context, string path, string content, bool overwrite = false)
     {
@@ -41,18 +48,62 @@ public class FileHandler
 
     public async ValueTask<FileHandlerResult> UpdateFileAsync(ToolExecutionContext context, string path, string content, bool createIfMissing = false)
     {
+        return await UpdateFileAsync(
+            context,
+            path,
+            content,
+            FileUpdateMode.Overwrite,
+            createIfMissing);
+    }
+
+    public async ValueTask<FileHandlerResult> UpdateFileAsync(
+        ToolExecutionContext context,
+        string path,
+        string content,
+        FileUpdateMode mode,
+        bool createIfMissing = false,
+        int? startLine = null,
+        int? endLine = null)
+    {
         string scopedPath = ResolveFilePath(context, path);
 
         if (!File.Exists(scopedPath) && !createIfMissing)
             throw new ValidationException("The requested file does not exist.");
 
         Directory.CreateDirectory(Path.GetDirectoryName(scopedPath)!);
-        await File.WriteAllTextAsync(scopedPath, content ?? string.Empty, Encoding.UTF8);
+
+        string existingContent = File.Exists(scopedPath)
+            ? await File.ReadAllTextAsync(scopedPath, Encoding.UTF8)
+            : string.Empty;
+        string updatedContent = ApplyFileUpdate(existingContent, content ?? string.Empty, mode, startLine, endLine);
+
+        await File.WriteAllTextAsync(scopedPath, updatedContent, Encoding.UTF8);
 
         return new()
         {
             Message = "File updated."
         };
+    }
+
+    public ValueTask<FileHandlerResult> GetDirectoryTreeAsync(ToolExecutionContext context, string path, IEnumerable<string>? filteredFolders = null)
+    {
+        string scopedPath = ResolvePath(context, path);
+
+        if (!Directory.Exists(scopedPath))
+            throw new ValidationException("The requested directory does not exist.");
+
+        HashSet<string> filters = new(
+            filteredFolders ?? DefaultFilteredFolders,
+            StringComparer.OrdinalIgnoreCase);
+        List<string> tree = [];
+
+        AddFiles(scopedPath, scopedPath, filters, tree);
+
+        return Completed(new()
+        {
+            Content = string.Join("\n", tree),
+            Message = "Directory tree read."
+        });
     }
 
     public async ValueTask<FileHandlerResult> DownloadFileFromUrlAsync(ToolExecutionContext context, string url, string path, bool overwrite = false)
@@ -255,6 +306,88 @@ public class FileHandler
     private static ValueTask<FileHandlerResult> Completed(FileHandlerResult result) =>
         new(result);
 
+    private static string ApplyFileUpdate(
+        string existingContent,
+        string content,
+        FileUpdateMode mode,
+        int? startLine,
+        int? endLine)
+    {
+        return mode switch
+        {
+            FileUpdateMode.Overwrite => content,
+            FileUpdateMode.Prepend => content + existingContent,
+            FileUpdateMode.Append => existingContent + content,
+            FileUpdateMode.Insert => InsertAtLine(existingContent, content, startLine),
+            FileUpdateMode.ReplaceLines => ReplaceLines(existingContent, content, startLine, endLine),
+            _ => throw new ValidationException("Unsupported file update mode.")
+        };
+    }
+
+    private static string InsertAtLine(string existingContent, string content, int? startLine)
+    {
+        int lineNumber = RequirePositiveLineNumber(startLine, "startLine");
+        TextLines existingLines = TextLines.From(existingContent);
+        TextLines contentLines = TextLines.From(content);
+
+        if (lineNumber > existingLines.Lines.Count + 1)
+            throw new ValidationException("Parameter 'startLine' cannot be greater than the line count plus one.");
+
+        existingLines.Lines.InsertRange(lineNumber - 1, contentLines.Lines);
+
+        return existingLines.ToText();
+    }
+
+    private static string ReplaceLines(string existingContent, string content, int? startLine, int? endLine)
+    {
+        int startLineNumber = RequirePositiveLineNumber(startLine, "startLine");
+        int endLineNumber = RequirePositiveLineNumber(endLine, "endLine");
+
+        if (endLineNumber < startLineNumber)
+            throw new ValidationException("Parameter 'endLine' must be greater than or equal to 'startLine'.");
+
+        TextLines existingLines = TextLines.From(existingContent);
+        TextLines contentLines = TextLines.From(content);
+
+        if (startLineNumber > existingLines.Lines.Count || endLineNumber > existingLines.Lines.Count)
+            throw new ValidationException("Line replacement range is outside the file.");
+
+        existingLines.Lines.RemoveRange(startLineNumber - 1, endLineNumber - startLineNumber + 1);
+        existingLines.Lines.InsertRange(startLineNumber - 1, contentLines.Lines);
+
+        return existingLines.ToText();
+    }
+
+    private static int RequirePositiveLineNumber(int? value, string parameterName)
+    {
+        if (value is null)
+            throw new ValidationException($"Parameter '{parameterName}' is required for this update mode.");
+
+        if (value < 1)
+            throw new ValidationException($"Parameter '{parameterName}' must be greater than zero.");
+
+        return value.Value;
+    }
+
+    private static void AddFiles(string rootPath, string path, HashSet<string> filteredFolders, List<string> tree)
+    {
+        DirectoryInfo directory = new(path);
+
+        foreach (FileSystemInfo item in directory.GetFileSystemInfos())
+        {
+            if (item is DirectoryInfo childDirectory)
+            {
+                if (filteredFolders.Contains(childDirectory.Name))
+                    continue;
+
+                AddFiles(rootPath, childDirectory.FullName, filteredFolders, tree);
+                continue;
+            }
+
+            tree.Add(Path.GetRelativePath(rootPath, item.FullName));
+        }
+    }
+
     private static void DeleteExistingDestination(string destinationPath)
     {
         if (File.Exists(destinationPath))
@@ -310,5 +443,48 @@ public class FileHandler
         return string.Equals(normalizedRoot, normalizedPath, StringComparison.OrdinalIgnoreCase)
             || normalizedPath.StartsWith(normalizedRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
             || normalizedPath.StartsWith(normalizedRoot + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private class TextLines
+    {
+        public List<string> Lines { get; private init; } = [];
+
+        private string NewLine { get; init; } = Environment.NewLine;
+
+        private bool EndsWithNewLine { get; init; }
+
+        public static TextLines From(string text)
+        {
+            if (text.Length == 0)
+                return new();
+
+            string newLine = text.Contains("\r\n", StringComparison.Ordinal)
+                ? "\r\n"
+                : "\n";
+            bool endsWithNewLine = text.EndsWith("\r\n", StringComparison.Ordinal)
+                || text.EndsWith("\n", StringComparison.Ordinal)
+                || text.EndsWith("\r", StringComparison.Ordinal);
+            string normalizedText = text.Replace("\r\n", "\n").Replace("\r", "\n");
+            List<string> lines = normalizedText.Split('\n').ToList();
+
+            if (endsWithNewLine && lines.Count > 0)
+                lines.RemoveAt(lines.Count - 1);
+
+            return new()
+            {
+                Lines = lines,
+                NewLine = newLine,
+                EndsWithNewLine = endsWithNewLine
+            };
+        }
+
+        public string ToText()
+        {
+            string text = string.Join(NewLine, Lines);
+
+            return EndsWithNewLine
+                ? text + NewLine
+                : text;
+        }
     }
 }

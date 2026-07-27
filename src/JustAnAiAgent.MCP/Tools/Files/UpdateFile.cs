@@ -7,7 +7,7 @@ public class UpdateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 {
     public override string Name => "file-update";
 
-    protected override string Description => "Overwrite a text file in the current tool workspace. Paths must be relative.";
+    protected override string Description => "Update a text file in the current tool workspace. Paths must be relative.";
 
     protected override ToolParameters Parameters { get; } = new()
     {
@@ -16,6 +16,9 @@ public class UpdateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
         [
             Parameter("path", "string", "Relative path of the file to update.", true),
             Parameter("content", "string", "Replacement text content.", true),
+            Parameter("mode", "string", "Update mode: overwrite, prepend, append, insert, or replaceLines. Defaults to overwrite.", false),
+            Parameter("startLine", "number", "1-based start line for insert and replaceLines modes.", false),
+            Parameter("endLine", "number", "1-based inclusive end line for replaceLines mode.", false),
             Parameter("createIfMissing", "boolean", "Whether to create the file if it does not exist.", false)
         ],
         Required = ["path", "content"]
@@ -28,7 +31,10 @@ public class UpdateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
             context,
             GetRequiredString(values, "path"),
             GetRequiredString(values, "content"),
-            GetOptionalBoolean(values, "createIfMissing"));
+            FileUpdateModeParser.Parse(GetOptionalString(values, "mode")),
+            GetOptionalBoolean(values, "createIfMissing"),
+            GetOptionalInteger(values, "startLine"),
+            GetOptionalInteger(values, "endLine"));
 
         return SerializeResult(result);
     }
