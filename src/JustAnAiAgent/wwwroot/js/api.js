@@ -38,6 +38,57 @@
         return this.buildRequest('POST', path, body, options);
     }
 
+    async postStream(path, body, onMessage, options = {}) {
+        const url = `${this.baseUrl}/${path.replace(/^\/+/, '')}`;
+
+        const config = {
+            method: 'POST',
+            ...options,
+            headers: {
+                Accept: 'application/x-ndjson',
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
+            body: JSON.stringify(body),
+        };
+
+        const response = await fetch(url, config);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        if (!response.body)
+            throw new Error('Response body is not available for streaming.');
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { value, done } = await reader.read();
+
+            if (done)
+                break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (line.trim())
+                    await onMessage(JSON.parse(line));
+            }
+        }
+
+        buffer += decoder.decode();
+
+        if (buffer.trim())
+            await onMessage(JSON.parse(buffer));
+    }
+
     async put(path, body, options = {}) {
         return this.buildRequest('PUT', path, body, options);
     }
