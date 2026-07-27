@@ -19,6 +19,10 @@ public class OllamaOrchestrationService(
     IEnumerable<IMcpTool> tools,
     ILLMProviderService llmProviderService) : IOllamaOrchestrationService
 {
+    private static readonly string ToolWorkspaceRoot = Path.Combine(
+        Environment.CurrentDirectory,
+        ".agent-workspaces");
+
     public async ValueTask<Message> AddMessageAndSendToModel(Guid id, Message message)
     {
         Conversation conversation = await conversationService.GetWithMessagesAsync(id);
@@ -194,13 +198,14 @@ public class OllamaOrchestrationService(
             yield return SnapshotMessage(toolCallsMessage, toolCallsMessage.Content, true, false);
 
             Dictionary<string, string> toolResponses = new();
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation);
 
             foreach (OllamaToolCall call in toolCallsFromStream)
             {
                 IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
 
                 if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments)));
+                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext));
             }
 
             Message toolResultsMessage = await messageService.AddAsync(new()
@@ -313,6 +318,7 @@ public class OllamaOrchestrationService(
         if (response.tool_calls is not null)
         {
             Dictionary<string, string> toolResponses = new Dictionary<string, string>();
+            ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation);
 
             Message toolResults = await messageService.AddAsync(new()
             {
@@ -331,7 +337,7 @@ public class OllamaOrchestrationService(
                 var tool = tools.FirstOrDefault(t => t.Name == call.function.name);
 
                 if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments)));
+                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext));
             }
 
             toolResults.Content = JsonSerializer.Serialize(toolResponses);
@@ -359,6 +365,19 @@ public class OllamaOrchestrationService(
             Name = argument.Key,
             Value = argument.Value,
         });
+
+    private static ToolExecutionContext BuildToolExecutionContext(Conversation conversation)
+    {
+        string workspaceType = conversation.ProjectId.HasValue
+            ? "projects"
+            : "conversations";
+        string workspaceId = (conversation.ProjectId ?? conversation.Id).ToString();
+
+        return new()
+        {
+            ProjectPath = Path.Combine(ToolWorkspaceRoot, workspaceType, workspaceId)
+        };
+    }
 
     private static Message SnapshotMessage(Message message, string content, bool isComplete, bool isStillRunning)
     {

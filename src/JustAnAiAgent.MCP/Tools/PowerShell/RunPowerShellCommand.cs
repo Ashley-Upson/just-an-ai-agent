@@ -23,13 +23,6 @@ public partial class RunPowerShellCommand : IMcpTool
         {
             new()
             {
-                Name = "projectPath",
-                Type = "string",
-                Description = "The project root directory. It is created if it does not exist.",
-                Required = true,
-            },
-            new()
-            {
                 Name = "command",
                 Type = "string",
                 Description = "The PowerShell command or script body to run. This is scanned for blocked escape-oriented patterns before execution.",
@@ -50,7 +43,7 @@ public partial class RunPowerShellCommand : IMcpTool
                 Required = false,
             }
         },
-        Required = new List<string> { "projectPath", "command" },
+        Required = new List<string> { "command" },
     };
 
     private static readonly string[] BlockedLiteralFragments =
@@ -96,12 +89,18 @@ public partial class RunPowerShellCommand : IMcpTool
 
     public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters)
     {
+        return await Execute(parameters, new ToolExecutionContext());
+    }
+
+    public async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
+    {
         Dictionary<string, object> parameterValues = parameters.ToDictionary(
             parameter => parameter.Name,
             parameter => parameter.Value,
             StringComparer.OrdinalIgnoreCase);
 
-        string projectPath = GetRequiredString(parameterValues, "projectPath");
+        string projectPath = context.ProjectPath
+            ?? throw new ValidationException("PowerShell execution requires an orchestration-provided project path.");
         string command = GetRequiredString(parameterValues, "command");
         string workingDirectoryParameter = GetOptionalString(parameterValues, "workingDirectory") ?? ".";
         int timeoutSeconds = GetTimeoutSeconds(parameterValues);
