@@ -17,7 +17,7 @@ public class AgenticProjectBroker(
         var context = contextFactory.CreateDbContext();
 
         IQueryable<AgenticProject> result = context.AgenticProjects
-            .Where(ap => ap.Conversations.Any(c => c.Users.Any(cu => cu.UserId == authInfo.SSOUserId)));
+            .Where(ap => ap.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId));
 
         return result;
     }
@@ -27,7 +27,7 @@ public class AgenticProjectBroker(
         using var context = contextFactory.CreateDbContext();
 
         return await context.AgenticProjects
-            .Where(ap => ap.Message.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+            .Where(ap => ap.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
             .FirstOrDefaultAsync(ap => ap.Id == id);
     }
 
@@ -35,11 +35,11 @@ public class AgenticProjectBroker(
     {
         using var context = contextFactory.CreateDbContext();
 
-        AgenticProject dbProject = await context.AgenticProjects
-            .Where(ap => ap.Message.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
-            .FirstOrDefaultAsync(ap => ap.Id == project.Id);
+        Conversation dbConversation = await context.Conversations
+            .Where(c => c.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+            .FirstOrDefaultAsync(c => c.Id == project.ConversationId);
 
-        if (dbProject is null)
+        if (dbConversation is null)
             throw new AuthenticationException("Access denied.");
 
         EntityEntry<AgenticProject> entry = await context.AgenticProjects.AddAsync(project);

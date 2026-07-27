@@ -17,7 +17,7 @@ public class ProjectTaskBroker(
         var context = contextFactory.CreateDbContext();
 
         IQueryable<ProjectTask> result = context.ProjectTasks
-            .Where(pt => pt.AgenticProject.Message.Conversation.Users.Any(uc => uc.UserId == authInfo.SSOUserId));
+            .Where(pt => pt.AgenticProject.Conversation.Users.Any(uc => uc.UserId == authInfo.SSOUserId));
 
         return result;
     }
@@ -27,7 +27,7 @@ public class ProjectTaskBroker(
         using var context = contextFactory.CreateDbContext();
 
         return await context.ProjectTasks
-            .Where(pt => pt.AgenticProject.Message.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+            .Where(pt => pt.AgenticProject.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
             .FirstOrDefaultAsync(pt => pt.Id == id);
     }
 
@@ -36,7 +36,7 @@ public class ProjectTaskBroker(
         using var context = contextFactory.CreateDbContext();
 
         var project = await context.AgenticProjects
-            .Where(ap => ap.Message.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
+            .Where(ap => ap.Conversation.Users.Any(cu => cu.UserId == authInfo.SSOUserId))
             .FirstOrDefaultAsync(ap => ap.Id == task.ProjectId);
 
         if (project is null)

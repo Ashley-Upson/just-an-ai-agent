@@ -60,9 +60,9 @@ public class JustAnAiAgentDbContext
             .HasForeignKey(ap => ap.MessageId);
 
         modelBuilder.Entity<AgenticProject>()
-            .HasMany(ap => ap.Conversations)
-            .WithOne()
-            .HasForeignKey(c => c.ProjectId);
+            .HasOne(ap => ap.Conversation)
+            .WithMany()
+            .HasForeignKey(ap => ap.ConversationId);
 
         modelBuilder.Entity<AgenticProject>()
             .HasMany(ap => ap.ProjectTasks)
