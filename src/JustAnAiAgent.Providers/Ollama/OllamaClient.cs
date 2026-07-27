@@ -228,7 +228,7 @@ public class OllamaClient
         if (message.Type != "tool-results")
             return results;
 
-        var responses = JsonSerializer.Deserialize<Dictionary<string, string>>(message.Content);
+        var responses = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(message.Content);
 
         foreach (var item in responses)
         {
@@ -236,7 +236,9 @@ public class OllamaClient
             {
                 role = "tool",
                 tool_name = item.Key,
-                content = item.Value
+                content = item.Value.ValueKind == JsonValueKind.String
+                    ? item.Value.GetString()
+                    : item.Value.GetRawText()
             });
         }
 

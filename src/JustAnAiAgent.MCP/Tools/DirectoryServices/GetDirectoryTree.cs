@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using JustAnAiAgent.MCP.Interfaces;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.MCP.MCP.Files;
@@ -63,7 +64,7 @@ public class GetDirectoryTree(FileHandler fileHandler) : IMcpTool
             GetRequiredString(values, "path"),
             GetOptionalFilter(values));
 
-        return result.Content ?? string.Empty;
+        return JsonSerializer.Serialize(result.Paths ?? []);
     }
 
     private static string GetRequiredString(Dictionary<string, object> values, string name)

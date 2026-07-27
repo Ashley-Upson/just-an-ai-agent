@@ -101,7 +101,7 @@ public class FileHandler
 
         return Completed(new()
         {
-            Content = string.Join("\n", tree),
+            Paths = tree,
             Message = "Directory tree read."
         });
     }

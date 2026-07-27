@@ -6,5 +6,7 @@ public class FileHandlerResult
 
     public string? Content { get; set; }
 
+    public IEnumerable<string>? Paths { get; set; }
+
     public string? Message { get; set; }
 }

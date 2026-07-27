@@ -197,16 +197,11 @@ public class OllamaOrchestrationService(
             conversation.Messages.Add(toolCallsMessage);
             yield return SnapshotMessage(toolCallsMessage, toolCallsMessage.Content, true, false);
 
-            Dictionary<string, string> toolResponses = new();
+            Dictionary<string, object> toolResponses = new();
             ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             foreach (OllamaToolCall call in toolCallsFromStream)
-            {
-                IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
-
-                if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext));
-            }
+                toolResponses.Add(call.function.name, await ExecuteToolCallAsync(call, toolExecutionContext));
 
             Message toolResultsMessage = await messageService.AddAsync(new()
             {
@@ -317,7 +312,7 @@ public class OllamaOrchestrationService(
     {
         if (response.tool_calls is not null)
         {
-            Dictionary<string, string> toolResponses = new Dictionary<string, string>();
+            Dictionary<string, object> toolResponses = new Dictionary<string, object>();
             ToolExecutionContext toolExecutionContext = BuildToolExecutionContext(conversation, configuration);
 
             Message toolResults = await messageService.AddAsync(new()
@@ -333,12 +328,7 @@ public class OllamaOrchestrationService(
             });
 
             foreach (var call in response.tool_calls)
-            {
-                var tool = tools.FirstOrDefault(t => t.Name == call.function.name);
-
-                if (tool is not null)
-                    toolResponses.Add(call.function.name, await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext));
-            }
+                toolResponses.Add(call.function.name, await ExecuteToolCallAsync(call, toolExecutionContext));
 
             toolResults.Content = JsonSerializer.Serialize(toolResponses);
             toolResults.ResponseReceivedAt = DateTimeOffset.UtcNow;
@@ -365,6 +355,42 @@ public class OllamaOrchestrationService(
             Name = argument.Key,
             Value = argument.Value,
         });
+
+    private async ValueTask<object> ExecuteToolCallAsync(OllamaToolCall call, ToolExecutionContext toolExecutionContext)
+    {
+        IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
+
+        if (tool is null)
+        {
+            return new
+            {
+                success = false,
+                message = $"The requested tool does not exist: {call.function.name}"
+            };
+        }
+
+        string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
+
+        if (TryParseJson(result, out JsonElement jsonResult))
+            return jsonResult;
+
+        return result;
+    }
+
+    private static bool TryParseJson(string value, out JsonElement json)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(value);
+            json = document.RootElement.Clone();
+            return true;
+        }
+        catch (JsonException)
+        {
+            json = default;
+            return false;
+        }
+    }
 
     private static ToolExecutionContext BuildToolExecutionContext(
         Conversation conversation,
