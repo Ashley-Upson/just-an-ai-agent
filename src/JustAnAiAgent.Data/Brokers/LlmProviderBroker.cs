@@ -4,6 +4,8 @@ using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Objects.Providers;
 using JustAnAiAgent.Providers.Interfaces;
 
+using System.Runtime.CompilerServices;
+
 namespace JustAnAiAgent.Data.Brokers;
 
 public class LlmProviderBroker(IModelProviderFactory providerFactory) : ILLMProviderBroker
@@ -38,7 +40,7 @@ public class LlmProviderBroker(IModelProviderFactory providerFactory) : ILLMProv
         string model,
         Conversation conversation,
         IEnumerable<ToolDefinition> tools,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         IModelProvider provider = providerFactory.CreateProviderForModel(model);
         string modelName = NormalizeModelName(model, provider.ProviderName);

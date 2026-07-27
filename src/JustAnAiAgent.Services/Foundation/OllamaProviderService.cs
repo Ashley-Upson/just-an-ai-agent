@@ -4,6 +4,8 @@ using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Services.Foundation.Interfaces;
 using JustAnAiAgent.Objects.Providers;
 
+using System.Runtime.CompilerServices;
+
 namespace JustAnAiAgent.Services.Foundation;
 
 public class OllamaProviderService(ILLMProviderBroker providerBroker) : ILLMProviderService
@@ -21,7 +23,7 @@ public class OllamaProviderService(ILLMProviderBroker providerBroker) : ILLMProv
         string model,
         Conversation conversation,
         IEnumerable<ToolDefinition> tools,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (ProviderChatStreamChunk chunk in providerBroker.SendConversationToModelWithToolsStreamAsync(model, conversation, tools, cancellationToken))
             yield return chunk;

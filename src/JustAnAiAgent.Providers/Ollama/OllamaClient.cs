@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using JustAnAiAgent.MCP.MCP;
@@ -60,7 +61,7 @@ public class OllamaClient
     public async IAsyncEnumerable<OllamaResponse> SendChatMessageWithToolsStreamAsync(
         ProviderChatRequest request,
         IEnumerable<ToolDefinition> tools,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         OllamaRequest ollamaRequest = BuildChatRequestWithTools(request, tools, stream: true);
         string payload = JsonSerializer.Serialize(ollamaRequest);

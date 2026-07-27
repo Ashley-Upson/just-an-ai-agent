@@ -4,6 +4,8 @@ using JustAnAiAgent.Objects.Ollama;
 using JustAnAiAgent.Providers.Interfaces;
 using JustAnAiAgent.Objects.Providers;
 
+using System.Runtime.CompilerServices;
+
 namespace JustAnAiAgent.Providers.Ollama;
 
 public class OllamaModelProvider : IModelProvider
@@ -47,7 +49,7 @@ public class OllamaModelProvider : IModelProvider
         string model,
         Conversation conversation,
         IEnumerable<ToolDefinition> tools,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ProviderChatRequest request = new(model, conversation);
 

@@ -1,4 +1,5 @@
 using System.Security.Authentication;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using JustAnAiAgent.MCP.Interfaces;
@@ -41,7 +42,10 @@ public class OllamaOrchestrationService(
         return await HandleModelResponse(conversation, messages.Last(), response);
     }
 
-    public async IAsyncEnumerable<Message> AddMessageAndSendToModelStream(Guid id, Message message, CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<Message> AddMessageAndSendToModelStream(
+        Guid id,
+        Message message,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         Conversation conversation = await conversationService.GetWithMessagesAsync(id);
 
@@ -61,7 +65,10 @@ public class OllamaOrchestrationService(
             yield return streamedMessage;
     }
 
-    private async IAsyncEnumerable<Message> StreamModelResponse(Conversation conversation, Message triggerMessage, CancellationToken cancellationToken)
+    private async IAsyncEnumerable<Message> StreamModelResponse(
+        Conversation conversation,
+        Message triggerMessage,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         StringBuilder accumulatedResponse = new();
         StringBuilder accumulatedThought = new();
