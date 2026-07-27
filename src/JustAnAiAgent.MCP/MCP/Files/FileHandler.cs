@@ -7,6 +7,8 @@ namespace JustAnAiAgent.MCP.MCP.Files;
 
 public class FileHandler
 {
+    private static readonly HttpClient HttpClient = new();
+
     public async ValueTask<FileHandlerResult> CreateFileAsync(ToolExecutionContext context, string path, string content, bool overwrite = false)
     {
         string scopedPath = ResolveFilePath(context, path);
@@ -50,6 +52,52 @@ public class FileHandler
         return new()
         {
             Message = "File updated."
+        };
+    }
+
+    public async ValueTask<FileHandlerResult> DownloadFileFromUrlAsync(ToolExecutionContext context, string url, string path, bool overwrite = false)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+            throw new ValidationException("Parameter 'url' is required.");
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
+            throw new ValidationException("Parameter 'url' must be an absolute URL.");
+
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+            throw new ValidationException("Only HTTP and HTTPS URLs can be downloaded.");
+
+        string scopedPath = ResolveFilePath(context, path);
+        Directory.CreateDirectory(Path.GetDirectoryName(scopedPath)!);
+
+        if (File.Exists(scopedPath) && !overwrite)
+            throw new ValidationException("The target file already exists.");
+
+        string temporaryPath = Path.Combine(
+            Path.GetDirectoryName(scopedPath)!,
+            $".just-an-ai-agent-download-{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            using HttpResponseMessage response = await HttpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+            response.EnsureSuccessStatusCode();
+
+            await using (Stream responseStream = await response.Content.ReadAsStreamAsync())
+            await using (FileStream fileStream = File.Create(temporaryPath))
+            {
+                await responseStream.CopyToAsync(fileStream);
+            }
+
+            File.Move(temporaryPath, scopedPath, overwrite);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
+        }
+
+        return new()
+        {
+            Message = "File downloaded."
         };
     }
 

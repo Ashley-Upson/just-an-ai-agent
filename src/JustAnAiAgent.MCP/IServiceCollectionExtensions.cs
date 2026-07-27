@@ -17,6 +17,7 @@ public static class IServiceCollectionExtensions
         services.AddTransient<IMcpTool, GetDirectoryTree>();
         services.AddTransient<IMcpTool, RunPowerShellCommand>();
         services.AddTransient<IMcpTool, CreateFile>();
+        services.AddTransient<IMcpTool, DownloadFileFromUrl>();
         services.AddTransient<IMcpTool, ReadFile>();
         services.AddTransient<IMcpTool, UpdateFile>();
         services.AddTransient<IMcpTool, DeleteFile>();
