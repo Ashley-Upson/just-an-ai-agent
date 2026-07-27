@@ -5,4 +5,6 @@ namespace JustAnAiAgent.Services.Orchestration.Interfaces;
 public interface IOllamaOrchestrationService
 {
     ValueTask<Message> AddMessageAndSendToModel(Guid id, Message message);
+
+    IAsyncEnumerable<Message> AddMessageAndSendToModelStream(Guid id, Message message, CancellationToken cancellationToken = default);
 }

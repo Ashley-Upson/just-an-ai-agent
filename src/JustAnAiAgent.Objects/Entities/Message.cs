@@ -24,6 +24,10 @@ public class Message
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    public bool IsComplete { get; set; }
+
+    public bool IsStillRunning { get; set; }
+
     [JsonIgnore]
     public virtual Conversation? Conversation { get; set; }
 

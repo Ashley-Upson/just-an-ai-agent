@@ -71,7 +71,9 @@ public class MessageBroker(
             ContentType = message.ContentType,
             ResponseReceivedAt = message.ResponseReceivedAt,
             CreatedAt = message.CreatedAt,
-            UpdatedAt = message.UpdatedAt
+            UpdatedAt = message.UpdatedAt,
+            IsComplete = message.IsComplete,
+            IsStillRunning = message.IsStillRunning
         };
 
         EntityEntry<Message> entry = context.Messages.Update(update);

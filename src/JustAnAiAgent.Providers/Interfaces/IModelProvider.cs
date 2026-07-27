@@ -13,4 +13,10 @@ public interface IModelProvider
     ValueTask<ProviderChatResponse> SendConversationToModelAsync(string model, Conversation conversation);
 
     ValueTask<ProviderChatResponse> SendConversationToModelWithToolsAsync(string model, Conversation conversation, IEnumerable<ToolDefinition> tools);
+
+    IAsyncEnumerable<ProviderChatStreamChunk> SendConversationToModelWithToolsStreamAsync(
+        string model,
+        Conversation conversation,
+        IEnumerable<ToolDefinition> tools,
+        CancellationToken cancellationToken = default);
 }

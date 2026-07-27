@@ -43,6 +43,18 @@ public class OllamaModelProvider : IModelProvider
         return ProviderResponseFromOllamaResponse(response);
     }
 
+    public async IAsyncEnumerable<ProviderChatStreamChunk> SendConversationToModelWithToolsStreamAsync(
+        string model,
+        Conversation conversation,
+        IEnumerable<ToolDefinition> tools,
+        CancellationToken cancellationToken = default)
+    {
+        ProviderChatRequest request = new(model, conversation);
+
+        await foreach (OllamaResponse response in client.SendChatMessageWithToolsStreamAsync(request, tools, cancellationToken))
+            yield return ProviderStreamChunkFromOllamaResponse(response);
+    }
+
     private ProviderChatResponse ProviderResponseFromOllamaResponse(OllamaResponse response)
     {
         ProviderChatResponse providerResponse = new();
@@ -52,5 +64,17 @@ public class OllamaModelProvider : IModelProvider
         providerResponse.tool_calls = response.message.tool_calls;
 
         return providerResponse;
+    }
+
+    private ProviderChatStreamChunk ProviderStreamChunkFromOllamaResponse(OllamaResponse response)
+    {
+        return new ProviderChatStreamChunk
+        {
+            model = response.model,
+            message = response.message?.content,
+            thought = response.message?.thinking,
+            tool_calls = response.message?.tool_calls,
+            done = response.done
+        };
     }
 }

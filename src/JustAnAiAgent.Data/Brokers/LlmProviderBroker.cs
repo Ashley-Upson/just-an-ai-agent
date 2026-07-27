@@ -34,6 +34,19 @@ public class LlmProviderBroker(IModelProviderFactory providerFactory) : ILLMProv
         return await provider.SendConversationToModelWithToolsAsync(modelName, conversation, tools);
     }
 
+    public async IAsyncEnumerable<ProviderChatStreamChunk> SendConversationToModelWithToolsStreamAsync(
+        string model,
+        Conversation conversation,
+        IEnumerable<ToolDefinition> tools,
+        CancellationToken cancellationToken = default)
+    {
+        IModelProvider provider = providerFactory.CreateProviderForModel(model);
+        string modelName = NormalizeModelName(model, provider.ProviderName);
+
+        await foreach (ProviderChatStreamChunk chunk in provider.SendConversationToModelWithToolsStreamAsync(modelName, conversation, tools, cancellationToken))
+            yield return chunk;
+    }
+
     private static string NormalizeModelName(string model, string providerName)
     {
         if (string.IsNullOrWhiteSpace(model))

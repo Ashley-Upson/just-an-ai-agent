@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using JustAnAiAgent.MCP.MCP;
 using JustAnAiAgent.Objects.Entities;
@@ -56,6 +57,48 @@ public class OllamaClient
         return response;
     }
 
+    public async IAsyncEnumerable<OllamaResponse> SendChatMessageWithToolsStreamAsync(
+        ProviderChatRequest request,
+        IEnumerable<ToolDefinition> tools,
+        CancellationToken cancellationToken = default)
+    {
+        OllamaRequest ollamaRequest = BuildChatRequestWithTools(request, tools, stream: true);
+        string payload = JsonSerializer.Serialize(ollamaRequest);
+
+        using HttpRequestMessage httpRequest = new(HttpMethod.Post, "chat")
+        {
+            Content = new StringContent(payload, Encoding.UTF8, "application/json")
+        };
+
+        using HttpResponseMessage httpResponse = await ApiClient.SendAsync(
+            httpRequest,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken);
+
+        httpResponse.EnsureSuccessStatusCode();
+
+        await using Stream stream = await httpResponse.Content.ReadAsStreamAsync(cancellationToken);
+        using StreamReader reader = new(stream);
+
+        JsonSerializerOptions options = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        {
+            string line = await reader.ReadLineAsync(cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            OllamaResponse chunk = JsonSerializer.Deserialize<OllamaResponse>(line, options);
+
+            if (chunk is not null)
+                yield return chunk;
+        }
+    }
+
     private OllamaRequest BuildBasicChatRequest(ProviderChatRequest request)
     {
         OllamaRequest ollamaRequest = new();
@@ -76,10 +119,10 @@ public class OllamaClient
         return ollamaRequest;
     }
 
-    private OllamaRequest BuildChatRequestWithTools(ProviderChatRequest request, IEnumerable<ToolDefinition> tools)
+    private OllamaRequest BuildChatRequestWithTools(ProviderChatRequest request, IEnumerable<ToolDefinition> tools, bool stream = false)
     {
         OllamaRequest ollamaRequest = new();
-        ollamaRequest.stream = false;
+        ollamaRequest.stream = stream;
         List<OllamaMessage> messages = new();
 
         foreach (var message in request.messages)

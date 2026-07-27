@@ -1,4 +1,5 @@
-﻿using JustAnAiAgent.Objects.Entities;
+using System.Text.Json;
+using JustAnAiAgent.Objects.Entities;
 using JustAnAiAgent.Services.Orchestration.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,5 +16,23 @@ public class ChatController(IOllamaOrchestrationService ollamaService) : Control
             return BadRequest(ModelState);
 
         return Ok(await ollamaService.AddMessageAndSendToModel(id, message));
+    }
+
+    [HttpPost("ConversationWithNewMessageStream/{id}")]
+    public async Task<IActionResult> PostStream([FromRoute] Guid id, [FromBody] Message message, CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        Response.ContentType = "application/x-ndjson";
+
+        await foreach (Message streamMessage in ollamaService.AddMessageAndSendToModelStream(id, message, cancellationToken))
+        {
+            string payload = JsonSerializer.Serialize(streamMessage);
+            await Response.WriteAsync($"{payload}\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+        }
+
+        return new EmptyResult();
     }
 }
