@@ -358,23 +358,34 @@ public class OllamaOrchestrationService(
 
     private async ValueTask<object> ExecuteToolCallAsync(OllamaToolCall call, ToolExecutionContext toolExecutionContext)
     {
-        IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
+        try
+        {
+            IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
 
-        if (tool is null)
+            if (tool is null)
+            {
+                return new
+                {
+                    success = false,
+                    message = $"The requested tool does not exist: {call.function.name}"
+                };
+            }
+
+            string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
+
+            if (TryParseJson(result, out JsonElement jsonResult))
+                return jsonResult;
+
+            return result;
+        }
+        catch (Exception exception)
         {
             return new
             {
                 success = false,
-                message = $"The requested tool does not exist: {call.function.name}"
+                message = exception.Message
             };
         }
-
-        string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
-
-        if (TryParseJson(result, out JsonElement jsonResult))
-            return jsonResult;
-
-        return result;
     }
 
     private static bool TryParseJson(string value, out JsonElement json)
