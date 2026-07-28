@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace JustAnAiAgent.Data.Migrations
 {
+    [DbContext(typeof(JustAnAiAgentDbContext))]
     [Migration("20260728123000_AddTokenUsageToMessages")]
     public partial class AddTokenUsageToMessages : Migration
     {
