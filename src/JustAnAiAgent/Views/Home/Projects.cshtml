@@ -10,6 +10,9 @@
         <div id="project-left-sidebar" class="d-none">
             <div class="project-sidebar-half">
                 <h3>Project tasks</h3>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#new-project-task-modal">
+                    New task
+                </button>
                 <div class="scrolling-list-container scrolling-list-half mt-1">
                     <ul class="list-group" id="project-tasks-list"></ul>
                 </div>
@@ -74,6 +77,57 @@
         <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-1 d-none" id="load-more-projects">
             Load more
         </button>
+    </div>
+</div>
+
+<div class="modal fade" id="new-project-task-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">New project task</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text" id="project-task-title-text">Title</span>
+                        <input type="text" class="form-control" name="Title" id="new-project-task-title" aria-describedby="project-task-title-text" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="new-project-task-description">Description</label>
+                    <textarea class="form-control form-control-sm" name="Description" id="new-project-task-description" rows="3"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="new-project-task-context">Additional context</label>
+                    <textarea class="form-control form-control-sm" name="AdditionalContext" id="new-project-task-context" rows="3"></textarea>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <label class="form-label" for="new-project-task-order-mode">Order</label>
+                        <select class="form-select form-select-sm" id="new-project-task-order-mode">
+                            <option value="end">At end</option>
+                            <option value="beginning">At beginning</option>
+                            <option value="before">Before task</option>
+                            <option value="after">After task</option>
+                        </select>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label" for="new-project-task-order-target">Task</label>
+                        <select class="form-select form-select-sm" id="new-project-task-order-target"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="create-project-task">Add</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

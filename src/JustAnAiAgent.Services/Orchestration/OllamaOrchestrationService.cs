@@ -349,32 +349,71 @@ public class OllamaOrchestrationService(
         return message;
     }
 
-    private IEnumerable<ToolParameterInput> ToolParameterInputsFromToolCallArguments(Dictionary<string, string> arguments) =>
+    private IEnumerable<ToolParameterInput> ToolParameterInputsFromToolCallArguments(Dictionary<string, JsonElement> arguments) =>
         arguments.Select(argument => new ToolParameterInput()
         {
             Name = argument.Key,
-            Value = argument.Value,
+            Value = GetToolParameterValue(argument.Value),
         });
+
+    private static object GetToolParameterValue(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => GetToolParameterNumberValue(value),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            JsonValueKind.Undefined => null,
+            _ => value.GetRawText()
+        };
+    }
+
+    private static object GetToolParameterNumberValue(JsonElement value)
+    {
+        if (value.TryGetInt32(out int intValue))
+            return intValue;
+
+        if (value.TryGetInt64(out long longValue))
+            return longValue;
+
+        if (value.TryGetDecimal(out decimal decimalValue))
+            return decimalValue;
+
+        return value.GetDouble();
+    }
 
     private async ValueTask<object> ExecuteToolCallAsync(OllamaToolCall call, ToolExecutionContext toolExecutionContext)
     {
-        IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
+        try
+        {
+            IMcpTool tool = tools.FirstOrDefault(t => t.Name == call.function.name);
 
-        if (tool is null)
+            if (tool is null)
+            {
+                return new
+                {
+                    success = false,
+                    message = $"The requested tool does not exist: {call.function.name}"
+                };
+            }
+
+            string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
+
+            if (TryParseJson(result, out JsonElement jsonResult))
+                return jsonResult;
+
+            return result;
+        }
+        catch (Exception exception)
         {
             return new
             {
                 success = false,
-                message = $"The requested tool does not exist: {call.function.name}"
+                message = exception.Message
             };
         }
-
-        string result = await tool.Execute(ToolParameterInputsFromToolCallArguments(call.function.arguments), toolExecutionContext);
-
-        if (TryParseJson(result, out JsonElement jsonResult))
-            return jsonResult;
-
-        return result;
     }
 
     private static bool TryParseJson(string value, out JsonElement json)

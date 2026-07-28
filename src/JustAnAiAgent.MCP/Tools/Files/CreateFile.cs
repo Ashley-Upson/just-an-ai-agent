@@ -23,13 +23,14 @@ public class CreateFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.CreateFileAsync(
-            context,
-            GetRequiredString(values, "path"),
-            GetOptionalString(values, "content") ?? string.Empty,
-            GetOptionalBoolean(values, "overwrite"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.CreateFileAsync(
+                context,
+                GetRequiredString(values, "path"),
+                GetOptionalString(values, "content") ?? string.Empty,
+                GetOptionalBoolean(values, "overwrite"));
+        });
     }
 }

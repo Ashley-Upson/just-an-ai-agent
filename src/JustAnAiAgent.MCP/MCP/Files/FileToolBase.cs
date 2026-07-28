@@ -40,6 +40,45 @@ public abstract class FileToolBase(FileHandler fileHandler) : IMcpTool
     protected static string SerializeResult(FileHandlerResult result) =>
         JsonSerializer.Serialize(result);
 
+    protected static async ValueTask<string> ExecuteFileOperation(Func<ValueTask<FileHandlerResult>> operation)
+    {
+        try
+        {
+            return SerializeResult(await operation());
+        }
+        catch (ValidationException exception)
+        {
+            return SerializeFailure(exception.Message);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            return SerializeFailure($"File operation failed because access was denied: {exception.Message}");
+        }
+        catch (IOException exception)
+        {
+            return SerializeFailure($"File operation failed because of an IO error: {exception.Message}");
+        }
+        catch (HttpRequestException exception)
+        {
+            return SerializeFailure($"File download failed: {exception.Message}");
+        }
+        catch (InvalidDataException exception)
+        {
+            return SerializeFailure($"Archive operation failed: {exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            return SerializeFailure($"File operation failed: {exception.Message}");
+        }
+    }
+
+    protected static string SerializeFailure(string message) =>
+        SerializeResult(new()
+        {
+            Success = false,
+            Message = message
+        });
+
     protected static Dictionary<string, object> ToParameterDictionary(IEnumerable<ToolParameterInput> parameters) =>
         parameters.ToDictionary(
             parameter => parameter.Name,

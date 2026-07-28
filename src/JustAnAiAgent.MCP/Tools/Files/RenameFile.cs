@@ -23,13 +23,14 @@ public class RenameFile(FileHandler fileHandler) : FileToolBase(fileHandler)
 
     public override async ValueTask<string> Execute(IEnumerable<ToolParameterInput> parameters, ToolExecutionContext context)
     {
-        Dictionary<string, object> values = ToParameterDictionary(parameters);
-        FileHandlerResult result = await FileHandler.RenameAsync(
-            context,
-            GetRequiredString(values, "path"),
-            GetRequiredString(values, "newName"),
-            GetOptionalBoolean(values, "overwrite"));
-
-        return SerializeResult(result);
+        return await ExecuteFileOperation(async () =>
+        {
+            Dictionary<string, object> values = ToParameterDictionary(parameters);
+            return await FileHandler.RenameAsync(
+                context,
+                GetRequiredString(values, "path"),
+                GetRequiredString(values, "newName"),
+                GetOptionalBoolean(values, "overwrite"));
+        });
     }
 }
