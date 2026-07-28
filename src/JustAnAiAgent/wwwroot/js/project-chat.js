@@ -683,8 +683,10 @@ function updateRenderedMessage(renderedMessage, message) {
     if (renderedMessage.receivedAtItem)
         renderedMessage.receivedAtItem.innerText = formatDate(message.ResponseReceivedAt);
 
-    if (renderedMessage.statusItem)
-        renderedMessage.statusItem.innerText = getMessageStatus(message);
+    updateTokenUsageItem(renderedMessage, message);
+
+    if (message.Type == 'response' && message.IsStillRunning)
+        setCurrentAction('Streaming response...');
 
     if (renderedMessage.contentItem)
         setMessageContent(renderedMessage.contentItem, message, renderedMessage.html);
@@ -715,15 +717,20 @@ function renderUserMessage(message) {
 function renderModelThought(message) {
     var modelIdSplit = splitModelId(message.ModelId);
     var receivedAtItem = makeListItem(formatDate(message.ResponseReceivedAt));
-    var statusItem = makeListItem(getMessageStatus(message));
+    var tokenUsageItem = makeTokenUsageItem(message);
+    var statItems = [
+        receivedAtItem,
+        makeListItem(modelIdSplit.provider),
+        makeListItem(modelIdSplit.model)
+    ];
+
+    if (tokenUsageItem)
+        statItems.push(tokenUsageItem);
+
+    var statsListGroup = makeListGroup(statItems, ['list-group-horizontal']);
 
     var statsItem = makeElementWithClasses('li', [], [
-        makeListGroup([
-            receivedAtItem,
-            makeListItem(modelIdSplit.provider),
-            makeListItem(modelIdSplit.model),
-            statusItem
-        ], ['list-group-horizontal'])
+        statsListGroup
     ]);
 
     var contentItem = makeListItem(message.Content ?? '', ['list-group-item-light']);
@@ -737,7 +744,8 @@ function renderModelThought(message) {
 
     return {
         receivedAtItem,
-        statusItem,
+        tokenUsageItem,
+        statsListGroup,
         contentItem,
         html: false
     };
@@ -745,20 +753,26 @@ function renderModelThought(message) {
 
 function renderModelResponse(message, renderStats = true) {
     var receivedAtItem = null;
-    var statusItem = null;
+    var tokenUsageItem = null;
+    var statsListGroup = null;
 
     if (renderStats) {
         var modelIdSplit = splitModelId(message.ModelId);
         receivedAtItem = makeListItem(formatDate(message.ResponseReceivedAt));
-        statusItem = makeListItem(getMessageStatus(message));
+        tokenUsageItem = makeTokenUsageItem(message);
+        var statItems = [
+            receivedAtItem,
+            makeListItem(modelIdSplit.provider),
+            makeListItem(modelIdSplit.model)
+        ];
+
+        if (tokenUsageItem)
+            statItems.push(tokenUsageItem);
+
+        statsListGroup = makeListGroup(statItems, ['list-group-horizontal']);
 
         var statsItem = makeElementWithClasses('li', [], [
-            makeListGroup([
-                receivedAtItem,
-                makeListItem(modelIdSplit.provider),
-                makeListItem(modelIdSplit.model),
-                statusItem
-            ], ['list-group-horizontal'])
+            statsListGroup
         ]);
 
         messagesBox.appendChild(statsItem);
@@ -775,7 +789,8 @@ function renderModelResponse(message, renderStats = true) {
 
     return {
         receivedAtItem,
-        statusItem,
+        tokenUsageItem,
+        statsListGroup,
         contentItem,
         html: true
     };
@@ -855,16 +870,36 @@ function formatJson(content) {
     return JSON.stringify(JSON.parse(content ?? '{}'), null, 4);
 }
 
-function getMessageStatus(message) {
-    if (message.IsStillRunning)
-        return message.Type == 'response'
-            ? 'Streaming response'
-            : 'Running...';
+function updateTokenUsageItem(renderedMessage, message) {
+    if (!renderedMessage.statsListGroup)
+        return;
 
-    if (message.IsComplete)
-        return 'Complete';
+    if (message.TokenUsage == null) {
+        if (renderedMessage.tokenUsageItem)
+            renderedMessage.tokenUsageItem.remove();
 
-    return 'Pending';
+        renderedMessage.tokenUsageItem = null;
+        return;
+    }
+
+    if (!renderedMessage.tokenUsageItem) {
+        renderedMessage.tokenUsageItem = makeTokenUsageItem(message);
+        renderedMessage.statsListGroup.appendChild(renderedMessage.tokenUsageItem);
+        return;
+    }
+
+    renderedMessage.tokenUsageItem.innerText = formatTokenUsage(message.TokenUsage);
+}
+
+function makeTokenUsageItem(message) {
+    if (message.TokenUsage == null)
+        return null;
+
+    return makeListItem(formatTokenUsage(message.TokenUsage));
+}
+
+function formatTokenUsage(value) {
+    return `${Number(value).toLocaleString()} tokens`;
 }
 
 function formatDate(value) {
