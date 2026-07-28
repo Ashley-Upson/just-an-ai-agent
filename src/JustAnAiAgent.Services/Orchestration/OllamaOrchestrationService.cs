@@ -82,6 +82,7 @@ public class OllamaOrchestrationService(
         Message responseMessage = null;
         Message thoughtMessage = null;
         IEnumerable<OllamaToolCall> toolCallsFromStream = null;
+        int? tokenUsageFromStream = null;
 
         await foreach (ProviderChatStreamChunk chunk in llmProviderService.SendConversationToModelWithToolsStreamAsync(
             triggerMessage.ModelId,
@@ -157,6 +158,9 @@ public class OllamaOrchestrationService(
 
             if (chunk.tool_calls is IEnumerable<OllamaToolCall> toolCalls)
                 toolCallsFromStream = toolCalls;
+
+            if (chunk.token_usage.HasValue)
+                tokenUsageFromStream = chunk.token_usage;
         }
 
         if (thoughtMessage is not null)
@@ -174,6 +178,7 @@ public class OllamaOrchestrationService(
             responseMessage.Content = accumulatedResponse.ToString();
             responseMessage.IsComplete = true;
             responseMessage.IsStillRunning = false;
+            responseMessage.TokenUsage = tokenUsageFromStream;
             responseMessage.ResponseReceivedAt = DateTimeOffset.UtcNow;
             await messageService.UpdateAsync(responseMessage.Id, responseMessage);
             yield return SnapshotMessage(responseMessage, responseMessage.Content, true, false);
@@ -191,6 +196,9 @@ public class OllamaOrchestrationService(
                 Content = JsonSerializer.Serialize(toolCallsFromStream),
                 IsComplete = true,
                 IsStillRunning = false,
+                TokenUsage = responseMessage is null
+                    ? tokenUsageFromStream
+                    : null,
                 ResponseReceivedAt = DateTimeOffset.UtcNow,
             });
 
@@ -254,6 +262,7 @@ public class OllamaOrchestrationService(
                 Type = "response",
                 ContentType = "string",
                 Content = response.message,
+                TokenUsage = response.token_usage,
                 ResponseReceivedAt = DateTimeOffset.UtcNow,
                 IsComplete = true,
                 IsStillRunning = false,
@@ -270,6 +279,9 @@ public class OllamaOrchestrationService(
                 Type = "tool-calls",
                 ContentType = "json",
                 Content = JsonSerializer.Serialize(response.tool_calls),
+                TokenUsage = string.IsNullOrWhiteSpace(response.message)
+                    ? response.token_usage
+                    : null,
                 IsComplete = true,
                 IsStillRunning = false,
             }));
@@ -297,6 +309,9 @@ public class OllamaOrchestrationService(
                         Type = "tool-calls",
                         ContentType = "json",
                         Content = serialized,
+                        TokenUsage = string.IsNullOrWhiteSpace(response.message)
+                            ? response.token_usage
+                            : null,
                         IsComplete = true,
                         IsStillRunning = false,
                     }));

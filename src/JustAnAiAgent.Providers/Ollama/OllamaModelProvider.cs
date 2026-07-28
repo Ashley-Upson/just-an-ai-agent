@@ -64,6 +64,7 @@ public class OllamaModelProvider : IModelProvider
         providerResponse.message = response.message.content;
         providerResponse.thought = response.message.thinking;
         providerResponse.tool_calls = response.message.tool_calls;
+        providerResponse.token_usage = GetTokenUsage(response);
 
         return providerResponse;
     }
@@ -76,7 +77,20 @@ public class OllamaModelProvider : IModelProvider
             message = response.message?.content,
             thought = response.message?.thinking,
             tool_calls = response.message?.tool_calls,
-            done = response.done
+            done = response.done,
+            token_usage = GetTokenUsage(response)
         };
+    }
+
+    private static int? GetTokenUsage(OllamaResponse response)
+    {
+        long tokenUsage = response.prompt_eval_count + response.eval_count;
+
+        if (tokenUsage <= 0)
+            return null;
+
+        return tokenUsage > int.MaxValue
+            ? int.MaxValue
+            : (int)tokenUsage;
     }
 }

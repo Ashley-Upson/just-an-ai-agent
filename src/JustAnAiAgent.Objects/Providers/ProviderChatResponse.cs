@@ -9,4 +9,6 @@ public class ProviderChatResponse
     public string message { get; set; }
 
     public dynamic tool_calls { get; set; }
+
+    public int? token_usage { get; set; }
 }

@@ -11,4 +11,6 @@ public class ProviderChatStreamChunk
     public dynamic tool_calls { get; set; }
 
     public bool done { get; set; }
+
+    public int? token_usage { get; set; }
 }
