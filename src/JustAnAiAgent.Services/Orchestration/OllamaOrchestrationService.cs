@@ -467,6 +467,7 @@ public class OllamaOrchestrationService(
             UpdatedAt = message.UpdatedAt,
             IsComplete = isComplete,
             IsStillRunning = isStillRunning,
+            TokenUsage = message.TokenUsage,
         };
     }
 }

@@ -28,6 +28,8 @@ public class Message
 
     public bool IsStillRunning { get; set; }
 
+    public int? TokenUsage { get; set; }
+
     [JsonIgnore]
     public virtual Conversation? Conversation { get; set; }
 

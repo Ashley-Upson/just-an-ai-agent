@@ -126,6 +126,9 @@ namespace JustAnAiAgent.Data.Migrations
                     b.Property<DateTimeOffset?>("ResponseReceivedAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<int?>("TokenUsage")
+                        .HasColumnType("int");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
